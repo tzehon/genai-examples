@@ -20,6 +20,23 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
    - MongoDB Atlas Vector Search for similarity matching
    - Claude for merchant verification and synonym detection
 
+   #### Why paraphrase-multilingual-mpnet-base-v2?
+   - **Superior Multilingual Performance**: Specifically trained on 50+ languages including English, Chinese, and other Asian languages
+
+   - **Paraphrase Optimization**: Trained to recognize semantic similarity even with different phrasings, crucial for merchant name variations
+
+   - **MPNet Architecture**: Combines benefits of BERT and XLNet with position-aware attention, leading to better semantic understanding
+
+   - **Benchmarks**:
+     - Higher performance on multilingual semantic similarity tasks compared to alternatives
+     - Strong zero-shot cross-lingual transfer capabilities
+     - Compact 768-dimensional embeddings balancing performance and efficiency
+     
+   - **Alternatives Considered**:
+     - `all-MiniLM-L6-v2`: Faster but less accurate for multilingual content
+     - `all-mpnet-base-v2`: Good performance but weaker on non-English text
+     - `multilingual-e5-large`: Larger model with higher resource requirements
+
 2. **PDF Processor**
    - PyMuPDF for text extraction
    - Claude for metadata extraction
