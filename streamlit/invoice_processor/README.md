@@ -81,94 +81,144 @@ anthropic_api_key = "your_anthropic_api_key"
 # Get your API key from: https://console.anthropic.com/account/keys
 ```
 
-## Merchant Classification Algorithm
+## Algorithm Flows
 
-The merchant classification process follows these steps:
+### 1. Merchant Classification Flow
 
-1. **Vector Embedding**
-   - Convert merchant name to vector using SentenceTransformer
-   - Model: "paraphrase-multilingual-mpnet-base-v2"
-   - Supports multiple languages including Chinese
-   - Each merchant name is converted to a 768-dimensional vector
-
-2. **Similarity Search**
 ```mermaid
 graph TD
-   %% Annotations first so they appear behind
-   ann1[/"Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector"/]
-   ann2[/"Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance"/]
-   ann3[/"Using: claude-3-5-sonnet-20241022"/]
+    %% Annotations first so they appear behind
+    ann1[/"Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector"/]
+    ann2[/"Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance"/]
+    ann3[/"Using: claude-3-5-sonnet-20241022"/]
 
-   subgraph InitialProcessing["Initial Processing"]
-       A[New Merchant Name] --> B[Vector Embedding]
-   end
+    subgraph InitialProcessing["Initial Processing"]
+        A[New Merchant Name] --> B[Vector Embedding]
+    end
 
-   subgraph VectorSearch["MongoDB Atlas Vector Search"]
-       B --> C{Exact Synonym Match?}
-       C -->|No| E[Vector Similarity Search]
-       E --> F{Similarity > 0.85?}
-   end
+    subgraph VectorSearch["MongoDB Atlas Vector Search"]
+        B --> C{Exact Synonym Match?}
+        C -->|No| E[Vector Similarity Search]
+        E --> F{Similarity > 0.85?}
+    end
 
-   C -->|Yes| D[Return Existing Merchant]
+    C -->|Yes| D[Return Existing Merchant]
 
-   F -->|Yes| G[Add as Synonym]
-   G --> H[Return Existing Merchant]
+    F -->|Yes| G[Add as Synonym]
+    G --> H[Return Existing Merchant]
 
-   subgraph LLMProcessing["Claude LLM Processing"]
-       F -->|No| I[LLM Verification]
-       I --> J{Is Synonym?}
-   end
+    subgraph LLMProcessing["Claude LLM Processing"]
+        F -->|No| I[LLM Verification]
+        I --> J{Is Synonym?}
+    end
 
-   J -->|Yes| K[Add as Synonym]
-   K --> L[Return Existing Merchant]
-   J -->|No| M[Create New Merchant]
+    J -->|Yes| K[Add as Synonym]
+    K --> L[Return Existing Merchant]
+    J -->|No| M[Create New Merchant]
 
-   %% Connect annotations with transparent edges
-   ann1 ~~~ B
-   ann2 ~~~ E
-   ann3 ~~~ I
+    %% Connect annotations with transparent edges
+    ann1 ~~~ B
+    ann2 ~~~ E
+    ann3 ~~~ I
 
-   classDef initial fill:#13773D,stroke:#2ecc71,color:#fff
-   classDef vector fill:#1B4B72,stroke:#4a90e2,color:#fff
-   classDef llm fill:#5B2D66,stroke:#9b51e0,color:#fff
-   classDef default color:#fff
-   classDef annotation fill:#fff,stroke:#666,color:#333
+    classDef initial fill:#13773D,stroke:#2ecc71,color:#fff
+    classDef vector fill:#1B4B72,stroke:#4a90e2,color:#fff
+    classDef llm fill:#5B2D66,stroke:#9b51e0,color:#fff
+    classDef default color:#fff
+    classDef annotation fill:#fff,stroke:#666,color:#333
 
-   class InitialProcessing initial
-   class VectorSearch vector
-   class LLMProcessing llm
-   class ann1,ann2,ann3 annotation
+    class InitialProcessing initial
+    class VectorSearch vector
+    class LLMProcessing llm
+    class ann1,ann2,ann3 annotation
 ```
 
-3. **LLM Verification**
-   - Uses Claude to verify potential matches when vector similarity is below threshold
-   - Considers:
-     - Common variations and misspellings (e.g., "McD" vs "McDonald's")
-     - Business name patterns (e.g., "Starbucks Coffee" vs "Starbucks")
-     - Multi-language equivalents (e.g., "香港餐厅" vs "Hong Kong Restaurant")
+### 2. Query Processing Flow
 
-4. **Merchant Storage**
-   ```javascript
-   {
-     canonical_name: "Merchant Name",
-     synonyms: ["Variation 1", "Variation 2"],
-     merchant_embedding: [...],  // 768-dimensional vector
-     metadata: {
-       first_seen: ISODate("..."),
-       last_updated: ISODate("..."),
-       source: "pdf_extraction",
-       languages: ["en", "zh"]
-     }
-   }
-   ```
+```mermaid
+graph TD
+    %% Annotations first so they appear behind
+    ann1[/"Using: claude-3-5-sonnet-20241022<br>Converts natural language to MongoDB query"/]
+    ann2[/"Using: MongoDB Atlas<br>Executes aggregation pipeline"/]
+
+    subgraph NLProcessing["Natural Language Processing"]
+        A[Natural Language Query] --> B[Query Analysis]
+        B --> C[Generate MongoDB Pipeline]
+    end
+
+    subgraph QueryProcessing["MongoDB Query Processing"]
+        C --> D[Join Collections]
+        D --> E[Apply Filters]
+        E --> F[Aggregate Results]
+    end
+
+    subgraph ResultsProcessing["Results Processing"]
+        F --> G[Format Results]
+        G --> H[Display in UI]
+    end
+
+    %% Connect annotations with transparent edges
+    ann1 ~~~ B
+    ann2 ~~~ D
+
+    classDef nlp fill:#13773D,stroke:#2ecc71,color:#fff
+    classDef query fill:#1B4B72,stroke:#4a90e2,color:#fff
+    classDef results fill:#5B2D66,stroke:#9b51e0,color:#fff
+    classDef default color:#fff
+    classDef annotation fill:#fff,stroke:#666,color:#333
+
+    class NLProcessing nlp
+    class QueryProcessing query
+    class ResultsProcessing results
+    class ann1,ann2 annotation
+
+    %% Example query path
+    H -.- I["Example:<br>Query: Show me all Grab receipts from last month<br>Pipeline: $lookup merchants → $match date → $group total"]
+```
+
+## Data Storage
+
+### Merchant Storage
+```javascript
+{
+  canonical_name: "Merchant Name",
+  synonyms: ["Variation 1", "Variation 2"],
+  merchant_embedding: [...],  // 768-dimensional vector
+  metadata: {
+    first_seen: ISODate("..."),
+    last_updated: ISODate("..."),
+    source: "pdf_extraction",
+    languages: ["en", "zh"]
+  }
+}
+```
+
+### Document Storage
+```javascript
+{
+  merchant_id: ObjectId("..."),
+  merchant_name: "Canonical Merchant Name",
+  date: ISODate("..."),
+  total_amount: 123.45,
+  category: "receipt",
+  currency: "SGD",
+  payment_method: "credit_card",
+  items: [
+    { name: "Item 1", price: 50.00 },
+    { name: "Item 2", price: 73.45 }
+  ],
+  processed_date: ISODate("..."),
+  source_filename: "invoice.pdf",
+  raw_text: "Original PDF text..."
+}
+```
 
 ## Usage Workflow
 
 1. **Document Upload**
    - Upload PDF invoice/receipt
    - System extracts text and metadata
-   - Classifies merchant automatically using the above algorithm
-   - Displays extracted information for verification
+   - Classifies merchant automatically
 
 2. **Merchant Classification**
    - Automatic detection of new/existing merchants
@@ -177,19 +227,11 @@ graph TD
    - Each classified name either:
      - Adds new synonym to existing merchant
      - Creates new merchant entry
-   - Vector embeddings enable fuzzy matching
 
 3. **Data Storage**
    - Merchant data stored in merchants collection
-     - Canonical names
-     - Synonyms
-     - Vector embeddings
-     - Metadata
    - Document data stored in documents collection
-     - Invoice/receipt details
-     - Merchant references
-     - Extracted metadata
-   - Collections linked via merchant_id
+   - Cross-referenced using merchant_id
 
 4. **Querying**
    - Use natural language queries
