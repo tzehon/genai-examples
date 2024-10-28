@@ -94,11 +94,11 @@ The merchant classification process follows these steps:
 2. **Similarity Search**
 ```mermaid
 graph TD
-    subgraph "Initial Processing"
+    subgraph InitialProcessing["Initial Processing"]
         A[New Merchant Name] --> B[Vector Embedding]
     end
 
-    subgraph "MongoDB Atlas Vector Search"
+    subgraph VectorSearch["MongoDB Atlas Vector Search"]
         B --> C{Exact Synonym Match?}
         C -->|No| E[Vector Similarity Search]
         E --> F{Similarity > 0.85?}
@@ -109,7 +109,7 @@ graph TD
     F -->|Yes| G[Add as Synonym]
     G --> H[Return Existing Merchant]
 
-    subgraph "Claude LLM Processing"
+    subgraph LLMProcessing["Claude LLM Processing"]
         F -->|No| I[LLM Verification]
         I --> J{Is Synonym?}
     end
@@ -118,9 +118,13 @@ graph TD
     K --> L[Return Existing Merchant]
     J -->|No| M[Create New Merchant]
 
-    style "MongoDB Atlas Vector Search" fill:#e6f3ff,stroke:#4a90e2
-    style "Claude LLM Processing" fill:#f9e6ff,stroke:#9b51e0
-    style "Initial Processing" fill:#e6ffe6,stroke:#2ecc71
+    classDef initial fill:#e6ffe6,stroke:#2ecc71
+    classDef vector fill:#e6f3ff,stroke:#4a90e2
+    classDef llm fill:#f9e6ff,stroke:#9b51e0
+
+    class InitialProcessing initial
+    class VectorSearch vector
+    class LLMProcessing llm
 ```
 
 3. **LLM Verification**
