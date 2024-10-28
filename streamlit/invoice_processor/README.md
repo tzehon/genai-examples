@@ -29,7 +29,7 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
 
    - **Benchmarks**:
      - Higher performance on multilingual semantic similarity tasks compared to alternatives
-     - Strong zero-shot cross-lingual transfer capabilities
+     - Strong cross-lingual transfer: Can understand semantic similarity between different languages without specific training (e.g., can match "Hong Kong Restaurant" with "香港餐厅" even though it wasn't explicitly trained on these pairs)
      - Compact 768-dimensional embeddings balancing performance and efficiency
      
    - **Alternatives Considered**:
