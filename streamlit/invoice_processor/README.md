@@ -94,13 +94,13 @@ The merchant classification process follows these steps:
 2. **Similarity Search**
 ```mermaid
 graph TD
-   subgraph InitialProcessing["Initial Processing (SentenceTransformer)"]
-       A[New Merchant Name] --> B["Vector Embedding<br><small>paraphrase-multilingual-mpnet-base-v2<br>768-dim vector</small>"]
+   subgraph InitialProcessing["Initial Processing"]
+       A[New Merchant Name] --> B[Vector Embedding]
    end
 
    subgraph VectorSearch["MongoDB Atlas Vector Search"]
        B --> C{Exact Synonym Match?}
-       C -->|No| E["Vector Similarity Search<br><small>Euclidean Distance</small>"]
+       C -->|No| E[Vector Similarity Search]
        E --> F{Similarity > 0.85?}
    end
 
@@ -110,13 +110,18 @@ graph TD
    G --> H[Return Existing Merchant]
 
    subgraph LLMProcessing["Claude LLM Processing"]
-       F -->|No| I["LLM Verification<br><small>claude-3-5-sonnet-20241022</small>"]
+       F -->|No| I[LLM Verification]
        I --> J{Is Synonym?}
    end
 
    J -->|Yes| K[Add as Synonym]
    K --> L[Return Existing Merchant]
    J -->|No| M[Create New Merchant]
+
+   %% Annotations
+   InitialProcessing -. "Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector" .-> B
+   VectorSearch -. "Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance" .-> E
+   LLMProcessing -. "Using: claude-3-5-sonnet-20241022" .-> I
 
    classDef initial fill:#13773D,stroke:#2ecc71,color:#fff
    classDef vector fill:#1B4B72,stroke:#4a90e2,color:#fff
