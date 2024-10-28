@@ -94,6 +94,11 @@ The merchant classification process follows these steps:
 2. **Similarity Search**
 ```mermaid
 graph TD
+   %% Annotations first so they appear behind
+   ann1[/"Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector"/]
+   ann2[/"Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance"/]
+   ann3[/"Using: claude-3-5-sonnet-20241022"/]
+
    subgraph InitialProcessing["Initial Processing"]
        A[New Merchant Name] --> B[Vector Embedding]
    end
@@ -118,19 +123,21 @@ graph TD
    K --> L[Return Existing Merchant]
    J -->|No| M[Create New Merchant]
 
-   %% Annotations
-   InitialProcessing -. "Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector" .-> B
-   VectorSearch -. "Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance" .-> E
-   LLMProcessing -. "Using: claude-3-5-sonnet-20241022" .-> I
+   %% Connect annotations with transparent edges
+   ann1 ~~~ B
+   ann2 ~~~ E
+   ann3 ~~~ I
 
    classDef initial fill:#13773D,stroke:#2ecc71,color:#fff
    classDef vector fill:#1B4B72,stroke:#4a90e2,color:#fff
    classDef llm fill:#5B2D66,stroke:#9b51e0,color:#fff
    classDef default color:#fff
+   classDef annotation fill:#fff,stroke:#666,color:#333
 
    class InitialProcessing initial
    class VectorSearch vector
    class LLMProcessing llm
+   class ann1,ann2,ann3 annotation
 ```
 
 3. **LLM Verification**
