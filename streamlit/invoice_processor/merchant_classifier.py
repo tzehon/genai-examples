@@ -166,12 +166,22 @@ class MultilingualMerchantClassifier:
         closest_match, similarity = self.find_closest_merchant(extracted_name)
 
         if similarity > 0.85:  # High confidence match
-            is_synonym = extracted_name in closest_match.get("synonyms", [])
+            # Add to synonyms array if it's a high confidence match
+            merchant_id = closest_match["_id"]
+            self.merchants.update_one(
+                {"_id": merchant_id},
+                {
+                    "$addToSet": {"synonyms": extracted_name},
+                    "$set": {
+                        "last_updated": datetime.utcnow()
+                    }
+                }
+            )
+
             return {
-                "merchant_id": closest_match["_id"],
+                "merchant_id": merchant_id,
                 "canonical_name": closest_match["canonical_name"],
                 "is_synonym": True,
-                "matched_via_synonym": is_synonym,
                 "confidence": similarity
             }
 

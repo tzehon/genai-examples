@@ -9,7 +9,7 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
 - Invoice/receipt metadata extraction
 - Natural language querying
 - Vector similarity search
-- Multi-language support
+- Multi-language support (English, Chinese)
 
 ## Technical Architecture
 
@@ -89,6 +89,7 @@ The merchant classification process follows these steps:
    - Convert merchant name to vector using SentenceTransformer
    - Model: "paraphrase-multilingual-mpnet-base-v2"
    - Supports multiple languages including Chinese
+   - Each merchant name is converted to a 768-dimensional vector
 
 2. **Similarity Search**
 ```mermaid
@@ -98,20 +99,21 @@ graph TD
     C -->|Yes| D[Return Existing Merchant]
     C -->|No| E[Vector Similarity Search]
     E --> F{Similarity > 0.85?}
-    F -->|Yes| G[High Confidence Match]
-    F -->|No| H[LLM Verification]
-    H --> I{Is Synonym?}
-    I -->|Yes| J[Add as Synonym]
-    I -->|No| K[Create New Merchant]
+    F -->|Yes| G[Add as Synonym]
+    G --> H[Return Existing Merchant]
+    F -->|No| I[LLM Verification]
+    I --> J{Is Synonym?}
+    J -->|Yes| K[Add as Synonym]
+    K --> L[Return Existing Merchant]
+    J -->|No| M[Create New Merchant]
 ```
 
 3. **LLM Verification**
-   - Uses Claude to verify potential matches
+   - Uses Claude to verify potential matches when vector similarity is below threshold
    - Considers:
-     - Common variations
-     - Misspellings
-     - Business name patterns
-     - Multi-language equivalents
+     - Common variations and misspellings (e.g., "McD" vs "McDonald's")
+     - Business name patterns (e.g., "Starbucks Coffee" vs "Starbucks")
+     - Multi-language equivalents (e.g., "香港餐厅" vs "Hong Kong Restaurant")
 
 4. **Merchant Storage**
    ```javascript
@@ -133,17 +135,29 @@ graph TD
 1. **Document Upload**
    - Upload PDF invoice/receipt
    - System extracts text and metadata
-   - Classifies merchant automatically
+   - Classifies merchant automatically using the above algorithm
+   - Displays extracted information for verification
 
 2. **Merchant Classification**
    - Automatic detection of new/existing merchants
-   - Synonym management
-   - Multi-language support
+   - Builds synonym database over time
+   - Handles multiple languages and variations
+   - Each classified name either:
+     - Adds new synonym to existing merchant
+     - Creates new merchant entry
+   - Vector embeddings enable fuzzy matching
 
 3. **Data Storage**
    - Merchant data stored in merchants collection
+     - Canonical names
+     - Synonyms
+     - Vector embeddings
+     - Metadata
    - Document data stored in documents collection
-   - Cross-referenced using merchant_id
+     - Invoice/receipt details
+     - Merchant references
+     - Extracted metadata
+   - Collections linked via merchant_id
 
 4. **Querying**
    - Use natural language queries
@@ -151,3 +165,8 @@ graph TD
      - "Show me all Grab receipts from last month"
      - "Calculate total spending by merchant"
      - "Find all transactions over $100"
+   - Queries automatically handle:
+     - Merchant variations/synonyms
+     - Date ranges
+     - Amount comparisons
+     - Category filtering
