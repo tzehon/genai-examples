@@ -118,9 +118,10 @@ graph TD
     K --> L[Return Existing Merchant]
     J -->|No| M[Create New Merchant]
 
-    classDef initial fill:#e6ffe6,stroke:#2ecc71
-    classDef vector fill:#e6f3ff,stroke:#4a90e2
-    classDef llm fill:#f9e6ff,stroke:#9b51e0
+    classDef initial fill:#13773D,stroke:#2ecc71,color:#fff
+    classDef vector fill:#1B4B72,stroke:#4a90e2,color:#fff
+    classDef llm fill:#5B2D66,stroke:#9b51e0,color:#fff
+    classDef default color:#fff
 
     class InitialProcessing initial
     class VectorSearch vector
