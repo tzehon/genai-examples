@@ -50,7 +50,7 @@ class MultilingualMerchantClassifier:
                     {
                         "type": "vector",
                         "path": "merchant_embedding",
-                        "similarity": "euclidean",
+                        "similarity": "cosine",
                         "numDimensions": self.model.get_sentence_embedding_dimension(),
                     }
                 ]

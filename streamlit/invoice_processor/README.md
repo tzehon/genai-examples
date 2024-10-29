@@ -31,7 +31,7 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
      - Higher performance on multilingual semantic similarity tasks compared to alternatives
      - Strong cross-lingual transfer: Can understand semantic similarity between different languages without specific training (e.g., can match "Hong Kong Restaurant" with "香港餐厅" even though it wasn't explicitly trained on these pairs)
      - Compact 768-dimensional embeddings balancing performance and efficiency
-     
+
    - **Alternatives Considered**:
      - `all-MiniLM-L6-v2`: Faster but less accurate for multilingual content
      - `all-mpnet-base-v2`: Good performance but weaker on non-English text
@@ -106,7 +106,7 @@ anthropic_api_key = "your_anthropic_api_key"
 graph TD
     %% Annotations first so they appear behind
     ann1[/"Using: paraphrase-multilingual-mpnet-base-v2<br>Output: 768-dimensional vector"/]
-    ann2[/"Using: MongoDB Atlas Vector Search<br>Metric: Euclidean Distance"/]
+    ann2[/"Using: MongoDB Atlas Vector Search<br>Metric: Cosine Distance"/]
     ann3[/"Using: claude-3-5-sonnet-20241022"/]
 
     subgraph InitialProcessing["Initial Processing"]
