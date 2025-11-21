@@ -49,9 +49,30 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.9 to 3.13 (Python 3.14+ may require additional build tools)
 - MongoDB Atlas account (free tier available)
 - Anthropic API key (get from https://console.anthropic.com/account/keys)
+
+### Additional Requirements for Python 3.14+
+
+If using Python 3.14 or newer, you'll need to install build tools as prebuilt wheels may not be available:
+
+**macOS:**
+```bash
+brew install cmake
+```
+
+**Linux:**
+```bash
+sudo apt-get install cmake build-essential  # Ubuntu/Debian
+sudo yum install cmake gcc-c++              # RedHat/CentOS
+```
+
+**Windows:**
+- Install [CMake](https://cmake.org/download/)
+- Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/)
+
+**Recommended:** Use Python 3.11-3.13 to avoid build requirements and get faster installation with prebuilt wheels.
 
 ## Complete Setup Guide
 
@@ -492,6 +513,31 @@ graph TD
   2. Check the generated query and fix JSON syntax manually
   3. Report the issue if it persists
 
+### Installation Issues
+
+**Problem**: `error: command 'cmake' failed: No such file or directory`
+- **Cause**: Using Python 3.14+ which requires building pyarrow from source
+- **Solutions**:
+  1. **Recommended**: Use Python 3.11-3.13 instead:
+     ```bash
+     deactivate  # Exit current venv
+     python3.13 -m venv .venv  # Or python3.12, python3.11
+     source .venv/bin/activate
+     pip install -r requirements.txt
+     ```
+  2. **Alternative**: Install cmake and rebuild:
+     ```bash
+     brew install cmake  # macOS
+     pip install -r requirements.txt
+     ```
+
+**Problem**: `Building wheel for pyarrow failed`
+- **Cause**: Missing build tools or incompatible Python version
+- **Solutions**:
+  1. Use Python 3.11-3.13 (has prebuilt wheels)
+  2. Install cmake and build tools (see Prerequisites section)
+  3. Try installing with conda instead: `conda install -c conda-forge pyarrow`
+
 ### General Issues
 
 **Problem**: `.streamlit/secrets.toml` not found
@@ -505,10 +551,10 @@ graph TD
 
 **Problem**: Application won't start
 - **Solutions**:
-  1. Check all prerequisites are met (Python 3.9+, dependencies installed)
+  1. Check all prerequisites are met (Python 3.9-3.13, dependencies installed)
   2. Verify secrets.toml exists and has correct values
   3. Check terminal for specific error messages
-  4. Try running in a fresh virtual environment
+  4. Try running in a fresh virtual environment with Python 3.11-3.13
 
 ## Technical Notes
 
