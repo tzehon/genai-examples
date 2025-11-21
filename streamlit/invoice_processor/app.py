@@ -60,7 +60,7 @@ def extract_metadata_with_claude(
     """
 
     message = claude.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-5-20250929",
         max_tokens=1000,
         temperature=0,
         messages=[
@@ -149,7 +149,7 @@ def process_natural_language_query(
     Format dates using ISODate() where needed."""
 
     message = claude.messages.create(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-sonnet-4-5-20250929",
         max_tokens=1000,
         temperature=0,
         messages=[
