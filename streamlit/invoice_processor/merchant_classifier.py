@@ -210,8 +210,24 @@ class MultilingualMerchantClassifier:
             ]
         )
 
-        response_text = message.content[0].text
-        analysis = json.loads(response_text)
+        # Get the response and clean it before parsing
+        response_text = message.content[0].text.strip()
+
+        # Remove markdown code blocks if present
+        if response_text.startswith('```json'):
+            response_text = response_text.split('```json')[1]
+        if response_text.startswith('```'):
+            response_text = response_text.split('```')[1]
+        if response_text.endswith('```'):
+            response_text = response_text.rsplit('```', 1)[0]
+        response_text = response_text.strip()
+
+        try:
+            analysis = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            # Print the response for debugging
+            print(f"Failed to parse JSON. Response was: {response_text}")
+            raise ValueError(f"Claude returned invalid JSON: {e}") from e
 
         if not analysis["is_new_merchant"] and closest_match:
             # Add as synonym if it doesn't exist

@@ -71,7 +71,24 @@ def extract_metadata_with_claude(
         ]
     )
 
-    return json.loads(message.content[0].text)
+    # Get the response and clean it before parsing
+    response = message.content[0].text.strip()
+
+    # Remove markdown code blocks if present
+    if response.startswith('```json'):
+        response = response.split('```json')[1]
+    if response.startswith('```'):
+        response = response.split('```')[1]
+    if response.endswith('```'):
+        response = response.rsplit('```', 1)[0]
+    response = response.strip()
+
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError as e:
+        # Print the response for debugging
+        print(f"Failed to parse JSON. Response was: {response}")
+        raise ValueError(f"Claude returned invalid JSON: {e}") from e
 
 def process_natural_language_query(
     claude: anthropic.Client,
@@ -80,6 +97,12 @@ def process_natural_language_query(
     """Convert natural language query to MongoDB query using Claude."""
     prompt = f"""Convert this natural language query into a MongoDB aggregation pipeline:
     "{query}"
+
+    CRITICAL: When a merchant name is mentioned in the query, use the EXACT merchant name as it appears in the query.
+    For example:
+    - "Grab Singapore" should search for exactly "Grab Singapore" (not just "Grab")
+    - "McDonald's" should search for exactly "McDonald's"
+    - Extract the full merchant name from the query and use it verbatim
 
     The database has two collections:
 
@@ -95,10 +118,10 @@ def process_natural_language_query(
 
     merchants collection:
     - _id (ObjectId)
-    - canonical_name (string, e.g., "Grab", "M1")
+    - canonical_name (string, e.g., "Grab Singapore", "M1 Limited")
     - synonyms (array of strings)
 
-    Here's the exact format to use (this is a working example for Grab transactions):
+    Here's the exact format to use (example with MERCHANT_NAME as placeholder):
     [
       {{
         "$lookup": {{
@@ -114,8 +137,8 @@ def process_natural_language_query(
                     {{ "$eq": ["$_id", "$$merchant_id"] }},
                     {{
                       "$or": [
-                        {{ "$eq": ["$canonical_name", "Grab"] }},
-                        {{ "$in": ["Grab", "$synonyms"] }}
+                        {{ "$eq": ["$canonical_name", "MERCHANT_NAME"] }},
+                        {{ "$in": ["MERCHANT_NAME", "$synonyms"] }}
                       ]
                     }}
                   ]
@@ -140,10 +163,11 @@ def process_natural_language_query(
     ]
 
     Important:
-    1. Use exact operator syntax: "$eq", "$ne", "$in", etc.
-    2. Always use proper JSON formatting
-    3. For string comparison use exact match, not regex
-    4. The $lookup must use let/expr pattern as shown above
+    1. Use EXACT merchant name from the query - do not abbreviate or modify it
+    2. Use exact operator syntax: "$eq", "$ne", "$in", etc.
+    3. Always use proper JSON formatting
+    4. For string comparison use exact match, not regex
+    5. The $lookup must use let/expr pattern as shown above
 
     Return only the valid JSON array for the MongoDB aggregation pipeline. No explanation.
     Format dates using ISODate() where needed."""
@@ -161,17 +185,25 @@ def process_natural_language_query(
     )
 
     # Get the response and ensure it's valid JSON
-    response = message.content[0].text
+    response = message.content[0].text.strip()
 
-    # Clean up any potential formatting issues
-    response = response.strip()
+    # Remove markdown code blocks if present
     if response.startswith('```json'):
         response = response.split('```json')[1]
     if response.startswith('```'):
         response = response.split('```')[1]
+    if response.endswith('```'):
+        response = response.rsplit('```', 1)[0]
     response = response.strip()
 
-    return response
+    # Add error handling for debugging
+    try:
+        # Validate it's valid JSON before returning
+        json.loads(response)
+        return response
+    except json.JSONDecodeError as e:
+        print(f"Failed to parse MongoDB query. Response was: {response}")
+        raise ValueError(f"Claude returned invalid JSON: {e}") from e
 
 def main():
     st.title("Receipt Processor")
@@ -201,7 +233,7 @@ def main():
                         merchant_result = merchant_classifier.classify_merchant(
                             metadata["merchant_name"],
                             claude,
-                            languages=["en", "zh"]  # Add more languages as needed
+                            languages=["en", "zh", "my"]  # Add more languages as needed
                         )
 
                         # Update metadata with merchant details
@@ -236,8 +268,35 @@ def main():
     # Query Database Tab
     with tab2:
         st.header("Query Database")
+
+        # Debug section
+        with st.expander("🔍 Debug: View Database Contents"):
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("Documents")
+                docs = list(db.documents.find().limit(5))
+                if docs:
+                    for doc in docs:
+                        doc["_id"] = str(doc["_id"])
+                        if "merchant_id" in doc:
+                            doc["merchant_id"] = str(doc["merchant_id"])
+                        st.json(doc)
+                else:
+                    st.info("No documents found")
+
+            with col2:
+                st.subheader("Merchants")
+                merchants = list(db.merchants.find().limit(10))
+                if merchants:
+                    for merchant in merchants:
+                        merchant["_id"] = str(merchant["_id"])
+                        st.json(merchant)
+                else:
+                    st.info("No merchants found")
+
         query = st.text_area("Enter your query in natural language",
-                           "How much did I spend on Grab")
+                           "How much did I spend on Grab Singapore")
 
         if st.button("Run Query"):
             with st.spinner("Processing query..."):
