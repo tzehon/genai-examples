@@ -29,7 +29,7 @@ def get_summary(folder):
     # Generate summary using LLM
     result = subprocess.run(
         ["llm", "-m", MODEL],
-        input=f"Summarize this project in 2-3 short sentences. Be concise and direct. Don't start with 'This'.\n\n{readme_file.read_text()}",
+        input=f"Summarize this research project concisely. Write just 1 paragraph (3-5 sentences) followed by an optional short bullet list if there are key findings. Vary your opening - don't start with 'This report' or 'This research'. Include 1-2 links to key tools/projects mentioned.\n\n{readme_file.read_text()}",
         capture_output=True, text=True
     )
     summary = result.stdout.strip()
@@ -64,12 +64,18 @@ repo_url = get_repo_url()
 
 for date, folder in projects:
     date_str = date[:10] if date else "unknown"
-    print(f"## [{folder}]({repo_url}/tree/main/{folder}) ({date_str})\n")
+    print(f"### [{folder}]({repo_url}/tree/main/{folder}) ({date_str})\n")
     print(get_summary(folder))
     print()
 ]]]-->
-## [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
+### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
-PDF invoice processor that extracts transaction data, automatically classifies merchants using multilingual vector embeddings and LLM verification, and enables natural language database queries. Built with Streamlit, MongoDB Atlas Vector Search, Claude Sonnet, and sentence transformers for semantic matching across 50+ languages.
+An intelligent PDF invoice processor leverages [Streamlit](https://streamlit.io/) to automatically extract, classify, and query financial documents using a sophisticated multi-stage approach. The system employs the `paraphrase-multilingual-mpnet-base-v2` model for 768-dimensional vector embeddings, [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) Vector Search for similarity matching (0.85 threshold), and Claude Sonnet 4.5 for metadata extraction and merchant verification. As the system processes documents over time, it builds an intelligent merchant database that recognizes variations and synonyms across 50+ languages—automatically linking "Grab Singapore Pte Ltd," "Grab SG," and even cross-lingual equivalents to the same canonical merchant entry.
+
+**Key capabilities:**
+- **Smart merchant classification**: Combines exact matching, vector similarity, and LLM verification to reduce duplicates
+- **Natural language querying**: Converts plain English queries like "Show Grab receipts from last month" into MongoDB aggregation pipelines
+- **Multilingual support**: Handles English, Chinese, and 48+ other languages with semantic understanding across translations
+- **Cost-efficient**: Free MongoDB M0 tier, ~$0.01-0.05 per document processing with Anthropic API
 
 <!--[[[end]]]-->
