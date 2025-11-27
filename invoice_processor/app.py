@@ -10,6 +10,84 @@ import fitz  # PyMuPDF
 from bson import ObjectId
 from merchant_classifier import MultilingualMerchantClassifier
 
+
+class PipelineValidationError(Exception):
+    """Raised when a MongoDB pipeline contains disallowed operations."""
+    pass
+
+
+# Security: Allowlist of safe MongoDB aggregation stages
+ALLOWED_PIPELINE_STAGES = {
+    "$match",
+    "$group",
+    "$sort",
+    "$limit",
+    "$skip",
+    "$project",
+    "$unwind",
+    "$lookup",
+    "$count",
+    "$addFields",
+}
+
+# Security: Stages that can write/modify data - must be blocked
+BLOCKED_PIPELINE_STAGES = {
+    "$out",
+    "$merge",
+    "$set",
+    "$unset",
+    "$replaceRoot",
+    "$replaceWith",
+}
+
+# Security: Collections that can be accessed via $lookup
+ALLOWED_COLLECTIONS = {"documents", "merchants"}
+
+
+def validate_pipeline(pipeline: list) -> None:
+    """
+    Validate a MongoDB aggregation pipeline for security.
+
+    Raises PipelineValidationError if the pipeline contains:
+    - Disallowed stages (e.g., $out, $merge that can write data)
+    - $lookup to collections not in the allowlist
+
+    Args:
+        pipeline: List of pipeline stages to validate
+
+    Raises:
+        PipelineValidationError: If pipeline contains dangerous operations
+    """
+    if not isinstance(pipeline, list):
+        raise PipelineValidationError("Pipeline must be a list of stages")
+
+    for i, stage in enumerate(pipeline):
+        if not isinstance(stage, dict):
+            raise PipelineValidationError(f"Stage {i} must be a dictionary")
+
+        for stage_name, stage_content in stage.items():
+            # Check for blocked stages (write operations)
+            if stage_name in BLOCKED_PIPELINE_STAGES:
+                raise PipelineValidationError(
+                    f"Stage '{stage_name}' is not allowed - write operations are blocked"
+                )
+
+            # Check if stage is in allowlist
+            if stage_name not in ALLOWED_PIPELINE_STAGES:
+                raise PipelineValidationError(
+                    f"Stage '{stage_name}' is not in the allowed stages list"
+                )
+
+            # Validate $lookup targets only allowed collections
+            if stage_name == "$lookup":
+                if isinstance(stage_content, dict):
+                    target_collection = stage_content.get("from")
+                    if target_collection and target_collection not in ALLOWED_COLLECTIONS:
+                        raise PipelineValidationError(
+                            f"$lookup to collection '{target_collection}' is not allowed. "
+                            f"Allowed collections: {ALLOWED_COLLECTIONS}"
+                        )
+
 def init_connections():
     """Initialize connections to MongoDB and Claude."""
     # Initialize MongoDB connection
@@ -310,6 +388,10 @@ def main():
                 # Execute query
                 try:
                     pipeline = json.loads(mongo_query)
+
+                    # Security: Validate pipeline before execution
+                    validate_pipeline(pipeline)
+
                     results = list(db.documents.aggregate(pipeline))
 
                     # Display results
@@ -321,6 +403,8 @@ def main():
                             result["merchant_id"] = str(result["merchant_id"])
                         st.json(result)
 
+                except PipelineValidationError as e:
+                    st.error(f"Security validation failed: {str(e)}")
                 except Exception as e:
                     st.error(f"Error executing query: {str(e)}")
 
