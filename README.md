@@ -29,7 +29,7 @@ def get_summary(folder):
     # Generate summary using LLM
     result = subprocess.run(
         ["llm", "-m", MODEL],
-        input=f"Summarize this research project concisely. Write just 1 paragraph (3-5 sentences). Vary your opening - don't start with 'This report' or 'This research'.\n\n{readme_file.read_text()}",
+        input=f"Summarize this project in 2-3 short sentences. Be concise and direct. Don't start with 'This'.\n\n{readme_file.read_text()}",
         capture_output=True, text=True
     )
     summary = result.stdout.strip()
@@ -70,6 +70,6 @@ for date, folder in projects:
 ]]]-->
 ## [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
-Leveraging multilingual semantic understanding and LLM intelligence, this PDF invoice processor automatically extracts transaction data and classifies merchants across languages using a sophisticated three-tier approach: exact synonym matching, vector similarity search with the `paraphrase-multilingual-mpnet-base-v2` model (768-dimensional embeddings with >0.85 cosine similarity threshold), and Claude Sonnet 4.5 verification for uncertain matches. The system builds a self-improving merchant database that recognizes variations like "Grab Singapore Pte Ltd" and "Grab SG" as the same entity, even across different languages, while enabling natural language queries converted into MongoDB aggregation pipelines. Built with Streamlit, MongoDB Atlas Vector Search, and Anthropic's Claude API, it provides an end-to-end workflow from PDF upload through intelligent classification to flexible querying, with the free-tier MongoDB and pay-per-use API pricing making it accessible for personal finance tracking.
+PDF invoice processor that extracts transaction data, automatically classifies merchants using multilingual vector embeddings and LLM verification, and enables natural language database queries. Built with Streamlit, MongoDB Atlas Vector Search, Claude Sonnet, and sentence transformers for semantic matching across 50+ languages.
 
 <!--[[[end]]]-->
