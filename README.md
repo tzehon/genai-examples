@@ -3,7 +3,6 @@
 Research projects, mostly carried out by LLM tools.
 
 <!--[[[cog
-import cog
 import os
 import subprocess
 from pathlib import Path
@@ -65,8 +64,12 @@ repo_url = get_repo_url()
 
 for date, folder in projects:
     date_str = date[:10] if date else "unknown"
-    cog.outl(f"## [{folder}]({repo_url}/tree/main/{folder}) ({date_str})\n")
-    cog.outl(get_summary(folder))
-    cog.outl()
+    print(f"## [{folder}]({repo_url}/tree/main/{folder}) ({date_str})\n")
+    print(get_summary(folder))
+    print()
 ]]]-->
+## [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
+
+Leveraging multilingual semantic understanding and LLM intelligence, this PDF invoice processor automatically extracts transaction data and classifies merchants across languages using a sophisticated three-tier approach: exact synonym matching, vector similarity search with the `paraphrase-multilingual-mpnet-base-v2` model (768-dimensional embeddings with >0.85 cosine similarity threshold), and Claude Sonnet 4.5 verification for uncertain matches. The system builds a self-improving merchant database that recognizes variations like "Grab Singapore Pte Ltd" and "Grab SG" as the same entity, even across different languages, while enabling natural language queries converted into MongoDB aggregation pipelines. Built with Streamlit, MongoDB Atlas Vector Search, and Anthropic's Claude API, it provides an end-to-end workflow from PDF upload through intelligent classification to flexible querying, with the free-tier MongoDB and pay-per-use API pricing making it accessible for personal finance tracking.
+
 <!--[[[end]]]-->
