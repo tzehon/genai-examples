@@ -176,3 +176,20 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+### Atlas Alerts Automation ###
+# Generated alert JSON files
+atlas-alerts-creation/alerts/
+# Execution logs
+atlas-alerts-creation/logs/
+# Alert tracking file (can be in root or atlas-alerts-creation/)
+.automation_alert_ids.json
+atlas-alerts-creation/.automation_alert_ids.json
