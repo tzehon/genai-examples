@@ -68,6 +68,17 @@ for date, folder in projects:
     print(get_summary(folder))
     print()
 ]]]-->
+### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
+
+A MongoDB automation script streamlines the creation of Atlas database alerts by reading configurations from an Excel file and deploying them via the [MongoDB Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The tool parses alert definitions including thresholds, metrics, and notification settings, then generates JSON configurations and creates corresponding alerts in Atlas projects. It supports dry-run mode for testing, can target specific notification emails/roles, and includes deletion options to remove either automation-created alerts or all alerts in a project while preserving tracking through a local JSON file.
+
+**Key Features:**
+- Automates 20+ alert types covering replication, disk I/O, backups, CPU, and system metrics
+- Parses natural language thresholds (e.g., "> 4000 for 2 minutes", "< 24h") into Atlas-compatible configurations
+- Creates separate low/high priority alerts when different thresholds are specified
+- Tracks automation-created alerts separately from Atlas defaults for safe selective deletion
+- Generates audit logs and JSON files for all operations
+
 ### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
 An intelligent PDF invoice processor leverages [Streamlit](https://streamlit.io/) to automatically extract, classify, and query financial documents using a sophisticated multi-stage approach. The system employs the `paraphrase-multilingual-mpnet-base-v2` model for 768-dimensional vector embeddings, [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) Vector Search for similarity matching (0.85 threshold), and Claude Sonnet 4.5 for metadata extraction and merchant verification. As the system processes documents over time, it builds an intelligent merchant database that recognizes variations and synonyms across 50+ languages—automatically linking "Grab Singapore Pte Ltd," "Grab SG," and even cross-lingual equivalents to the same canonical merchant entry.
