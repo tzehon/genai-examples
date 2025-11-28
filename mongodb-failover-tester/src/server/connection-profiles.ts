@@ -32,7 +32,7 @@ const client = new MongoClient(uri);
     displayName: 'Fragile (Bad Overrides)',
     description: 'Short timeouts + disabled retries - common misconfiguration',
     settings: {
-      serverSelectionTimeoutMS: 2000,  // Overridden too low - elections take 10-30s!
+      serverSelectionTimeoutMS: 2000,  // Overridden too low - no safety margin!
       socketTimeoutMS: 2000,           // Overridden too low
       retryWrites: false,              // Disabled - no automatic retries
       retryReads: false,               // Disabled - no automatic retries
@@ -45,8 +45,8 @@ const client = new MongoClient(uri, {
   retryReads: false,               // No retries!
 });
 
-// Elections typically take 10-30 seconds.
-// With 2s timeout and no retries, operations WILL fail.`
+// Elections are fast (typically under 10s), but 2s timeout
+// leaves no safety margin. Without retries, operations WILL fail.`
   },
 
   custom: {

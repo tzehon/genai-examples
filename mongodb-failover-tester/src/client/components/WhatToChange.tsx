@@ -67,9 +67,9 @@ export const WhatToChange: React.FC = () => {
         <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
           <h4 className="font-semibold text-yellow-400 mb-2">WHY?</h4>
           <p className="text-sm text-gray-300">
-            Elections take <strong>10-30 seconds</strong>. If your timeout is shorter
-            than the election duration, operations will fail because the driver
-            gives up waiting before a new primary is ready.
+            Elections are fast—typically under 10 seconds. However, using a 2-second timeout
+            leaves no safety margin for network variability, so operations may fail because
+            the driver gives up before confirming the new primary is ready.
           </p>
         </div>
 

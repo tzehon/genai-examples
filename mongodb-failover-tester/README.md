@@ -17,7 +17,7 @@ A full-stack application demonstrating that MongoDB driver defaults are already 
 ```javascript
 // This breaks failover resilience:
 const client = new MongoClient(uri, {
-  serverSelectionTimeoutMS: 2000,  // Too short! Elections take 10-30s
+  serverSelectionTimeoutMS: 2000,  // Too short for safety margin
   retryWrites: false,              // No automatic retries!
   retryReads: false,               // No automatic retries!
 });
@@ -93,7 +93,7 @@ Timeline:
 
 ~180s   Atlas executes failover
         ├── Primary steps down
-        ├── Election begins (10-30 seconds)
+        ├── Election begins (typically under 10 seconds)
         │
         │   During election:
         │   ├── Resilient: Operations queue, wait up to 30s ✓
@@ -129,7 +129,7 @@ await collection.find({ testId: 'test-1234567890' })
 
 ### Why Fragile Fails
 
-During the 10-30 second election window:
+During the brief election window:
 
 | Scenario | What Happens |
 |----------|--------------|
@@ -221,7 +221,7 @@ Open http://localhost:5173
 | Code | `new MongoClient(uri)` | `new MongoClient(uri, { timeout: 2000, retries: false })` |
 | serverSelectionTimeoutMS | 30000 (default) | 2000 (override) |
 | retryWrites / retryReads | true (default) | false (override) |
-| Election takes 18s | 30s > 18s, waits and succeeds | 2s < 18s, fails immediately, no retry |
+| Election takes 8s | 30s > 8s, waits and succeeds | 2s < 8s, fails immediately, no retry |
 | Result | **Zero failures** | **Many failures** |
 
 ## The Lesson
@@ -232,13 +232,18 @@ const client = new MongoClient(uri);
 
 // BAD: Don't override with short timeouts and disabled retries
 const client = new MongoClient(uri, {
-  serverSelectionTimeoutMS: 2000,  // Elections take 10-30s!
+  serverSelectionTimeoutMS: 2000,  // Too short for safety margin!
   retryWrites: false,              // Disables automatic retry!
   retryReads: false,               // Disables automatic retry!
 });
 ```
 
-## Why Elections Take 10-30 Seconds
+## Why the 30-Second Default Timeout?
+
+MongoDB elections are fast—typically completing in under 10 seconds. However, the default `serverSelectionTimeoutMS: 30000` (30s) provides a generous safety margin for:
+- Network variability
+- Cloud provider orchestration delays
+- Edge cases in distributed systems
 
 When a primary steps down:
 1. Secondaries detect primary is gone (heartbeat timeout)
@@ -246,9 +251,7 @@ When a primary steps down:
 3. Voting occurs among replica set members
 4. New primary is elected and ready to accept writes
 
-The actual election takes **10-30 seconds**. The default `serverSelectionTimeoutMS: 30000` (30s) accommodates this perfectly.
-
-If you override it to 2 seconds, operations will fail repeatedly because the driver gives up before a new primary is ready.
+If you override the timeout to 2 seconds, operations may fail because the driver gives up before confirming the new primary is ready—even though elections themselves are very fast.
 
 > **Note:** When using Atlas's "Test Failover" feature, there's a 3-5 minute delay while Atlas orchestrates the test (planning, graceful shutdown, etc.). The election itself is still fast once it begins. The test duration setting accounts for this orchestration delay.
 
