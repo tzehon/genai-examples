@@ -46,10 +46,10 @@ ALERT_MAPPINGS = {
         "uses_threshold": True,
     },
     "Number of elections in last hour": {
-        # Elections are tracked via PRIMARY_ELECTED event, not a metric
-        "event_type": "PRIMARY_ELECTED",
+        # TOO_MANY_ELECTIONS fires when election count exceeds threshold
+        "event_type": "TOO_MANY_ELECTIONS",
         "metric_name": None,
-        "uses_threshold": False,
+        "uses_threshold": True,
     },
     "Disk read IOPS on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
@@ -374,6 +374,13 @@ def create_alert_config(
                 "operator": "GREATER_THAN",
                 "threshold": int(threshold_val),
                 "units": "HOURS",
+            }
+        elif mapping["event_type"] == "TOO_MANY_ELECTIONS":
+            # Election count threshold (e.g., > 3 elections in last hour)
+            config["threshold"] = {
+                "operator": threshold_info.get("operator", "GREATER_THAN"),
+                "threshold": int(threshold_info.get("threshold", 3)),
+                "units": "RAW",
             }
 
     # Handle HOST_DOWN and NO_PRIMARY duration thresholds separately
