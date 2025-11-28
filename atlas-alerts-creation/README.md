@@ -4,6 +4,22 @@ Automation script to create MongoDB Atlas alerts from an Excel configuration fil
 
 **IMPORTANT: These are AUTOMATED ALERTS - NOT default Atlas alerts.**
 
+## Why This Exists
+
+MongoDB provides [recommended alert configurations](https://www.mongodb.com/docs/atlas/architecture/current/monitoring-alerts/#recommended-atlas-alert-configurations) to help teams monitor their Atlas deployments effectively. However, implementing these recommendations manually requires cross-referencing multiple documentation sources:
+
+1. Review the [recommended alert configurations](https://www.mongodb.com/docs/atlas/architecture/current/monitoring-alerts/#recommended-atlas-alert-configurations) to understand what to monitor
+2. Look up the [alert conditions reference](https://www.mongodb.com/docs/atlas/reference/alert-conditions/#host-alerts) to map each recommendation to the correct category, condition, and metric
+3. Follow the [configure an alert guide](https://www.mongodb.com/docs/atlas/configure-alerts/#configure-an-alert) to actually create each alert in the Atlas UI
+4. Set the correct threshold values and notification preferences
+5. Repeat this process for each alert (20+ configurations)
+
+For a single project, this can take significant time. For organizations managing multiple Atlas projects, the manual approach becomes a bottleneck during onboarding and increases the risk of misconfiguration.
+
+This tool automates the entire process: define your alert configurations once in a spreadsheet, then deploy them consistently across any number of projects in seconds.
+
+The included `atlas_alert_configurations.xlsx` spreadsheet was generated using an LLM to extract and structure the recommended alerts from the MongoDB documentation, saving additional manual effort.
+
 ## Prerequisites
 
 - Python 3.8+
