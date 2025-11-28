@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Code blocks */
+.code-block {
+  @apply font-mono text-sm bg-gray-900 rounded-lg p-4 overflow-x-auto;
+}
+
+/* Animations */
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 237, 100, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 237, 100, 0);
+  }
+}
+
+.pulse-green {
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.pulse-red {
+  animation: pulse-red 2s infinite;
+}
+
+/* Status indicators */
+.status-healthy {
+  @apply bg-green-500;
+}
+
+.status-failover {
+  @apply bg-yellow-500;
+}
+
+.status-idle {
+  @apply bg-gray-500;
+}
+
+/* Latency colors */
+.latency-fast {
+  @apply text-green-400;
+}
+
+.latency-medium {
+  @apply text-yellow-400;
+}
+
+.latency-slow {
+  @apply text-red-400;
+}
+
+/* Operation feed */
+.operation-entry {
+  @apply py-1 px-2 text-xs font-mono border-l-2;
+}
+
+.operation-success {
+  @apply border-green-500 bg-green-500/5;
+}
+
+.operation-failure {
+  @apply border-red-500 bg-red-500/10;
+}
+
+/* Profile cards */
+.profile-card {
+  @apply bg-gray-800 rounded-lg p-4 border border-gray-700;
+}
+
+.profile-card-resilient {
+  @apply border-green-500/50;
+}
+
+.profile-card-fragile {
+  @apply border-red-500/50;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  @apply transition-all duration-300 ease-in-out;
+}
