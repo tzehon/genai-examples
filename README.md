@@ -80,14 +80,14 @@ MongoDB Atlas Failover Tester is a full-stack application that demonstrates mode
 
 ### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
 
-A MongoDB automation script streamlines the creation of Atlas database alerts by reading configurations from an Excel file and deploying them via the [MongoDB Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The tool parses alert definitions including thresholds, metrics, and notification settings, then generates JSON configurations and creates corresponding alerts in Atlas projects. It supports dry-run mode for testing, can target specific notification emails/roles, and includes deletion options to remove either automation-created alerts or all alerts in a project while preserving tracking through a local JSON file.
+A developer created an automation tool that streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into Atlas CLI commands. Rather than manually creating 20+ recommended alerts by cross-referencing multiple documentation pages for each Atlas project, teams can now define alert configurations once in a spreadsheet and deploy them consistently across multiple projects in seconds. The tool uses the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/stable/) to create alerts programmatically, tracks automation-created alerts separately from defaults, and includes an LLM-generated Excel template pre-populated with MongoDB's recommended alert configurations.
 
-**Key Features:**
-- Automates 20+ alert types covering replication, disk I/O, backups, CPU, and system metrics
-- Parses natural language thresholds (e.g., "> 4000 for 2 minutes", "< 24h") into Atlas-compatible configurations
-- Creates separate low/high priority alerts when different thresholds are specified
-- Tracks automation-created alerts separately from Atlas defaults for safe selective deletion
-- Generates audit logs and JSON files for all operations
+**Key features:**
+- Converts Excel alert definitions to Atlas CLI JSON configurations
+- Supports dry-run mode to preview changes before deployment
+- Selectively deletes automation-created alerts while preserving Atlas defaults
+- Maps 20+ recommended alert types including replication lag, disk I/O, backup failures, and resource utilization
+- Generates timestamped logs and tracks created alert IDs for management
 
 ### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
