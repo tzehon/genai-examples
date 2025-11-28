@@ -78,6 +78,10 @@ MongoDB Atlas Failover Tester is a full-stack application that demonstrates mode
 - Disabling automatic retries removes the driver's built-in resilience mechanism
 - Zero configuration change needed for production-ready failover handling
 
+### [ops-manager-alerts-creation](https://github.com/tzehon/research/tree/main/ops-manager-alerts-creation) (2025-11-28)
+
+Automation script to create MongoDB Ops Manager alerts from an Excel configuration file using the Ops Manager API. Uses HTTP Digest authentication with API keys to directly call the Ops Manager API. Includes 27 pre-configured alerts covering replication, host health, disk I/O, backup agents, and monitoring agents. Adapted from the Atlas alert automation tool with Ops Manager-specific event types.
+
 ### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
 
 A developer created an automation tool that streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into Atlas CLI commands. Rather than manually creating 20+ recommended alerts by cross-referencing multiple documentation pages for each Atlas project, teams can now define alert configurations once in a spreadsheet and deploy them consistently across multiple projects in seconds. The tool uses the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/stable/) to create alerts programmatically, tracks automation-created alerts separately from defaults, and includes an LLM-generated Excel template pre-populated with MongoDB's recommended alert configurations.
