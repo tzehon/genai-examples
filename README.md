@@ -70,13 +70,13 @@ for date, folder in projects:
 ]]]-->
 ### [mongodb-failover-tester](https://github.com/tzehon/research/tree/main/mongodb-failover-tester) (2025-11-28)
 
-MongoDB Atlas Failover Tester is a full-stack application that demonstrates modern [MongoDB drivers](https://www.mongodb.com/docs/drivers/) already handle failover resilience through their default settings—no additional configuration needed. The tool runs side-by-side comparisons of resilient (default) versus fragile (misconfigured) database connections during real [Atlas](https://www.mongodb.com/atlas) primary failovers triggered via the Admin API, showing that operations succeed with default 30-second timeouts and automatic retries, but fail when developers override these settings with 2-second timeouts or disabled retries during the 10-30 second election window. Built with Node.js, React, and Socket.IO, it creates three separate MongoClient instances to run identical read/write operations every 150ms while monitoring replica set topology changes in real-time.
+MongoDB drivers come configured with robust failover defaults—30-second timeouts and automatic retries—that handle replica set elections seamlessly without any configuration. This [MongoDB Atlas](https://www.mongodb.com/atlas) failover testing application proves this by comparing two real [MongoClient](https://mongodb.github.io/node-mongodb-native/) instances side-by-side during live Atlas-triggered failovers: one using driver defaults succeeds with zero failures, while another with overridden settings (2-second timeout, retries disabled) fails repeatedly during the brief election window. The full-stack app uses three separate client connections—two for testing different configurations and one for monitoring cluster topology—to demonstrate that elections typically complete in under 10 seconds, well within the default 30-second safety margin, but faster than poorly configured clients can handle.
 
 **Key findings:**
-- Default driver settings (`retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000`) handle elections automatically
-- Overriding with short timeouts (2s) causes failures since elections take 10-30 seconds
-- Disabling automatic retries removes the driver's built-in resilience mechanism
-- Zero configuration change needed for production-ready failover handling
+- **Resilient config** (defaults): `retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000` → Zero failures
+- **Fragile config** (bad overrides): `retryWrites: false`, `retryReads: false`, `serverSelectionTimeoutMS: 2000` → Many failures
+- Elections complete in <10s, but 30s default provides safety margin for network variability
+- Modern drivers (4.2+ for writes, 6.0+ for reads) handle failover automatically—no code changes needed
 
 ### [ops-manager-alerts-creation](https://github.com/tzehon/research/tree/main/ops-manager-alerts-creation) (2025-11-28)
 
