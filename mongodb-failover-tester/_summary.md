@@ -1,7 +1,0 @@
-MongoDB Atlas Failover Tester is a full-stack application that demonstrates modern [MongoDB drivers](https://www.mongodb.com/docs/drivers/) already handle failover resilience through their default settings—no additional configuration needed. The tool runs side-by-side comparisons of resilient (default) versus fragile (misconfigured) database connections during real [Atlas](https://www.mongodb.com/atlas) primary failovers triggered via the Admin API, showing that operations succeed with default 30-second timeouts and automatic retries, but fail when developers override these settings with 2-second timeouts or disabled retries during the 10-30 second election window. Built with Node.js, React, and Socket.IO, it creates three separate MongoClient instances to run identical read/write operations every 150ms while monitoring replica set topology changes in real-time.
-
-**Key findings:**
-- Default driver settings (`retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000`) handle elections automatically
-- Overriding with short timeouts (2s) causes failures since elections take 10-30 seconds
-- Disabling automatic retries removes the driver's built-in resilience mechanism
-- Zero configuration change needed for production-ready failover handling
