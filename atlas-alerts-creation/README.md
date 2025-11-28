@@ -271,6 +271,86 @@ The Excel file should have the following columns:
 - `Any occurrence` - Alert on any occurrence (event-based)
 - `15 minutes` - Duration-based threshold
 
+## Extending and Modifying Alerts
+
+### Adding New Alerts
+
+To add a new alert, you need to update two files:
+
+**Step 1: Add mapping to `create_atlas_alerts.py`**
+
+Add an entry to the `ALERT_MAPPINGS` dictionary (around line 42):
+
+```python
+"Your Alert Name": {
+    "event_type": "EVENT_TYPE_NAME",    # Required: Atlas event type
+    "metric_name": "METRIC_NAME",        # Optional: for metric-based alerts, or None
+    "units": "RAW",                      # Optional: BYTES, MILLISECONDS, SECONDS, HOURS, RAW
+    "uses_threshold": True,              # Optional: for event-based alerts with thresholds
+}
+```
+
+**Step 2: Add a row to `atlas_alert_configurations.xlsx`**
+
+Add a row with these columns:
+- **Alert Name** - Must exactly match the key in `ALERT_MAPPINGS`
+- **Low Priority Threshold** - e.g., `> 4000 for 2 minutes`
+- **High Priority Threshold** - Different threshold, or leave empty if same as low
+
+### Alert Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| Metric-based | Uses `OUTSIDE_METRIC_THRESHOLD` event with a `metric_name` | Disk IOPS, CPU % |
+| Event with threshold | Event type with `uses_threshold: True` | Elections, Host Down |
+| Pure event | No threshold, fires on any occurrence | Failed Backup, No Primary |
+
+### Changing Thresholds
+
+Edit the threshold columns in `atlas_alert_configurations.xlsx`. Supported formats:
+
+| Format | Example | Description |
+|--------|---------|-------------|
+| Basic comparison | `> 4000 for 2 minutes` | Value exceeds 4000 for 2 minutes |
+| Time-based | `< 24h for 5 minutes` | Less than 24 hours for 5 minutes |
+| Milliseconds | `> 50ms for 5 minutes` | Latency over 50ms |
+| Size-based | `> 2GB for 15 minutes` | Size exceeds 2GB |
+| Percentage | `> 80%` | Percentage threshold |
+| Event-based | `Any occurrence` | Fires on any occurrence |
+| Duration only | `15 minutes` | Duration-based threshold |
+
+### Key Conventions
+
+1. **Low vs High priority**: System creates separate alerts when thresholds differ
+2. **Duplicate detection**: Alerts with identical `(event_type, metric_name, threshold, duration)` are auto-skipped
+3. **File naming**: JSON files are auto-generated as `{number}_{alert_name}_{priority}.json`
+4. **Test first**: Always use `--dry-run` to validate before deploying
+5. **delayMin**: Automatically set from threshold duration (when first notification fires)
+6. **Notification interval**: Fixed at 60 minutes for all GROUP notifications
+
+### Example: Adding a Connection Count Alert
+
+1. Add to `ALERT_MAPPINGS` in `create_atlas_alerts.py`:
+```python
+"Connection Count": {
+    "event_type": "OUTSIDE_METRIC_THRESHOLD",
+    "metric_name": "CONNECTIONS",
+    "units": "RAW",
+}
+```
+
+2. Add row to Excel file:
+   - Alert Name: `Connection Count`
+   - Low Priority Threshold: `> 500 for 5 minutes`
+   - High Priority Threshold: `> 1000 for 2 minutes`
+
+3. Test with dry run:
+```bash
+./run_alerts.sh --project-id YOUR_PROJECT_ID --dry-run
+```
+
+4. Review generated JSON in `alerts/` directory, then deploy.
+
 ## Reference Documentation
 
 - [Atlas CLI alerts settings create](https://www.mongodb.com/docs/atlas/cli/current/command/atlas-alerts-settings-create/)
