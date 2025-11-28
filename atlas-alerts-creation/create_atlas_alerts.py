@@ -79,7 +79,7 @@ ALERT_MAPPINGS = {
     "Host is Down": {
         "event_type": "HOST_DOWN",
         "metric_name": None,
-        "uses_threshold": False,
+        "uses_threshold": True,
     },
     "Replica set has no primary": {
         "event_type": "NO_PRIMARY",
@@ -241,10 +241,10 @@ def parse_threshold(threshold_str: str) -> dict[str, Any]:
     # Parse threshold value and units
     # Handle special cases like "0-10", "10+"
     if "-" in threshold_part and not threshold_part.startswith("-"):
-        # Range like "0-10" - use the upper bound
+        # Range like "0-10" - use the lower bound to differentiate from "10+"
         range_match = re.match(r"(\d+)-(\d+)", threshold_part)
         if range_match:
-            result["threshold"] = int(range_match.group(2))
+            result["threshold"] = int(range_match.group(1))
     elif threshold_part.endswith("+"):
         # Like "10+"
         result["threshold"] = int(threshold_part.rstrip("+"))
@@ -364,13 +364,6 @@ def create_alert_config(
                 "threshold": int(threshold_val) if threshold_val >= 1 else 1,
                 "units": "HOURS",
             }
-        elif mapping["event_type"] in ["HOST_DOWN", "NO_PRIMARY"]:
-            # These use duration-based thresholds
-            config["threshold"] = {
-                "operator": "GREATER_THAN",
-                "threshold": threshold_info.get("duration_minutes", 5),
-                "units": "MINUTES",
-            }
         elif mapping["event_type"] == "CPS_SNAPSHOT_BEHIND":
             # Backup behind uses hours
             threshold_val = threshold_info.get("threshold", 12)
@@ -382,6 +375,15 @@ def create_alert_config(
                 "threshold": int(threshold_val),
                 "units": "HOURS",
             }
+
+    # Handle HOST_DOWN and NO_PRIMARY duration thresholds separately
+    # (they use duration_minutes regardless of is_event flag since thresholds like "15 minutes" are parsed as events)
+    if mapping["event_type"] in ["HOST_DOWN", "NO_PRIMARY"] and mapping.get("uses_threshold"):
+        config["threshold"] = {
+            "operator": "GREATER_THAN",
+            "threshold": threshold_info.get("duration_minutes", 5),
+            "units": "MINUTES",
+        }
 
     return config
 
@@ -431,7 +433,7 @@ def generate_json_files(
 
     # Track created alerts to prevent duplicates
     # Key: (event_type, metric_name, threshold) -> prevents exact duplicates
-    created_alerts: set[tuple[str, Optional[str], Optional[float]]] = set()
+    created_alerts: set[tuple[str, Optional[str], Optional[float], Optional[int]]] = set()
 
     for alert in alerts:
         name = alert["name"]
@@ -458,10 +460,12 @@ def generate_json_files(
                 notification_email,
             )
 
-            # Check for duplicate: same event_type, metric_name, and threshold
+            # Check for duplicate: same event_type, metric_name, and threshold/duration
             metric_name = mapping.get("metric_name")
             threshold_val = threshold_info.get("threshold")
-            alert_key = (mapping["event_type"], metric_name, threshold_val)
+            duration_val = threshold_info.get("duration_minutes")
+            # Include duration in key for event-based alerts that use duration as the distinguishing factor
+            alert_key = (mapping["event_type"], metric_name, threshold_val, duration_val)
 
             if alert_key in created_alerts:
                 logger.warning(f"  ⏭  Skipping duplicate alert: {name} (Low Priority) - same as existing alert")
@@ -498,10 +502,12 @@ def generate_json_files(
                 notification_email,
             )
 
-            # Check for duplicate: same event_type, metric_name, and threshold
+            # Check for duplicate: same event_type, metric_name, and threshold/duration
             metric_name = mapping.get("metric_name")
             threshold_val = threshold_info.get("threshold")
-            alert_key = (mapping["event_type"], metric_name, threshold_val)
+            duration_val = threshold_info.get("duration_minutes")
+            # Include duration in key for event-based alerts that use duration as the distinguishing factor
+            alert_key = (mapping["event_type"], metric_name, threshold_val, duration_val)
 
             if alert_key in created_alerts:
                 logger.warning(f"  ⏭  Skipping duplicate alert: {name} (High Priority) - same as existing alert")
