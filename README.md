@@ -84,14 +84,13 @@ Automation script to create MongoDB Ops Manager alerts from an Excel configurati
 
 ### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
 
-A developer created an automation tool that streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into Atlas CLI commands. Rather than manually creating 20+ recommended alerts by cross-referencing multiple documentation pages for each Atlas project, teams can now define alert configurations once in a spreadsheet and deploy them consistently across multiple projects in seconds. The tool uses the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/stable/) to create alerts programmatically, tracks automation-created alerts separately from defaults, and includes an LLM-generated Excel template pre-populated with MongoDB's recommended alert configurations.
+A Python automation tool streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into alerts via the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The tool addresses the time-consuming manual process of implementing MongoDB's recommended alert configurations across multiple projects, which normally requires cross-referencing documentation, configuring 20+ alerts individually, and repeating the process for each Atlas project. Users define alert configurations once in a spreadsheet (metrics, thresholds, notification preferences), then deploy them consistently across any number of projects in seconds using a simple bash wrapper script.
 
 **Key features:**
-- Converts Excel alert definitions to Atlas CLI JSON configurations
-- Supports dry-run mode to preview changes before deployment
-- Selectively deletes automation-created alerts while preserving Atlas defaults
-- Maps 20+ recommended alert types including replication lag, disk I/O, backup failures, and resource utilization
-- Generates timestamped logs and tracks created alert IDs for management
+- **Automated mapping**: Converts alert names to Atlas event types and metric names (e.g., "Disk IOPS", "Replication Lag", "Host Down")
+- **Flexible thresholds**: Supports multiple formats (percentage, time-based, size-based) with separate low/high priority alerts
+- **Safe operations**: Dry-run mode, duplicate detection, and selective deletion (automation-created alerts only vs. all alerts)
+- **Tracking**: Maintains `.automation_alert_ids.json` to distinguish automation-created alerts from default Atlas alerts
 
 ### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 

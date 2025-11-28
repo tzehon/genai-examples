@@ -1,0 +1,7 @@
+A Python automation tool streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into alerts via the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The tool addresses the time-consuming manual process of implementing MongoDB's recommended alert configurations across multiple projects, which normally requires cross-referencing documentation, configuring 20+ alerts individually, and repeating the process for each Atlas project. Users define alert configurations once in a spreadsheet (metrics, thresholds, notification preferences), then deploy them consistently across any number of projects in seconds using a simple bash wrapper script.
+
+**Key features:**
+- **Automated mapping**: Converts alert names to Atlas event types and metric names (e.g., "Disk IOPS", "Replication Lag", "Host Down")
+- **Flexible thresholds**: Supports multiple formats (percentage, time-based, size-based) with separate low/high priority alerts
+- **Safe operations**: Dry-run mode, duplicate detection, and selective deletion (automation-created alerts only vs. all alerts)
+- **Tracking**: Maintains `.automation_alert_ids.json` to distinguish automation-created alerts from default Atlas alerts
