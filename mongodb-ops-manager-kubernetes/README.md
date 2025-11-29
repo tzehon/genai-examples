@@ -388,4 +388,3 @@ Other MongoDB projects in this research repository:
 - [MongoDB Ops Manager Documentation](https://www.mongodb.com/docs/ops-manager/current/)
 - [cert-manager Documentation](https://cert-manager.io/docs/)
 - [Helm Charts Repository](https://github.com/mongodb/helm-charts)
-- [MongoDB Kubernetes Operator GitHub](https://github.com/mongodb/mongodb-kubernetes)
