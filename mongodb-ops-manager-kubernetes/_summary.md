@@ -5,4 +5,4 @@ Key capabilities:
 - Automatic backup infrastructure with point-in-time recovery
 - Multi-cluster deployments spanning separate Kubernetes clusters
 
-Related: [MongoDB Controllers for Kubernetes](https://www.mongodb.com/docs/kubernetes/current/) | [ops-manager-alerts-creation](../ops-manager-alerts-creation/)
+Related: [MongoDB Controllers for Kubernetes](https://www.mongodb.com/docs/kubernetes/current/) | [ops-manager-alerts-creation](https://github.com/tzehon/research/tree/main/ops-manager-alerts-creation)
