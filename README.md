@@ -68,6 +68,17 @@ for date, folder in projects:
     print(get_summary(folder))
     print()
 ]]]-->
+### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
+
+A comprehensive Kubernetes deployment framework for MongoDB Ops Manager using MongoDB Controllers for Kubernetes (MCK). The project automates the setup of production-ready MongoDB infrastructure including Ops Manager with backup (oplog + blockstore), TLS encryption via cert-manager, LDAP authentication, and multi-cluster support using Istio service mesh. Originally evolved from a Docker-based setup, now focuses exclusively on Kubernetes with support for GKE, EKS, OpenShift, and local clusters.
+
+Key capabilities:
+- One-command deployment of Ops Manager + managed clusters via `_launch.bash`
+- Automatic backup infrastructure with point-in-time recovery
+- Multi-cluster deployments spanning separate Kubernetes clusters
+
+Related: [MongoDB Controllers for Kubernetes](https://www.mongodb.com/docs/kubernetes/current/) | [ops-manager-alerts-creation](../ops-manager-alerts-creation/)
+
 ### [mongodb-failover-tester](https://github.com/tzehon/research/tree/main/mongodb-failover-tester) (2025-11-28)
 
 MongoDB drivers come configured with robust failover defaults—30-second timeouts and automatic retries—that handle replica set elections seamlessly without any configuration. This [MongoDB Atlas](https://www.mongodb.com/atlas) failover testing application proves this by comparing two real [MongoClient](https://mongodb.github.io/node-mongodb-native/) instances side-by-side during live Atlas-triggered failovers: one using driver defaults succeeds with zero failures, while another with overridden settings (2-second timeout, retries disabled) fails repeatedly during the brief election window. The full-stack app uses three separate client connections—two for testing different configurations and one for monitoring cluster topology—to demonstrate that elections typically complete in under 10 seconds, well within the default 30-second safety margin, but faster than poorly configured clients can handle.
