@@ -190,7 +190,6 @@ mongodb-ops-manager-kubernetes/
 │   └── connect_*.bash          # Connection helpers
 ├── helm/                       # Helm charts
 │   └── enterprise-database/    # MongoDB Enterprise chart
-├── atlas/                      # Atlas Operator scripts
 └── misc/                       # Diagnostic utilities
 ```
 
