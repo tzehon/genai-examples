@@ -1,0 +1,185 @@
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBOpsManager
+metadata:
+  name: NAME
+
+spec:
+  replicas: REPLICAS
+  version: VERSION # 8.0.16 # 7.0.2 # 6.0.6 # 5.0.14 # 4.4.15
+  clusterDomain: DOMAINNAME
+  #DEMO jvmParameters: ["-Xms2560m", "-Xmx2560m"] # 2.5M is a good size for a demo -- comment out for larger clusters in production
+  adminCredentials: admin-user-credentials # Should match metadata.name in the Kubernetes secret for the admin user
+  statefulSet:
+    spec:
+      template:
+        metadata:
+          annotations:
+            key1: value1
+        spec:
+          containers:
+            - name: mongodb-ops-manager
+              resources:  # 3Gi a good size for a demo -- use 5Gi or more for larger clusters in production
+                limits:
+                  cpu:    "OMCPU"
+                  memory: OMMEMLIM
+                requests:
+                  cpu:    "OMCPU"
+                  memory: OMMEMREQ 
+
+  # secret containing the TLS certificate signed by known or custom CA. The secret must have a key "server.pem"
+  #TLS security: # enables TLS for Ops Manager allowing it to serve traffic over HTTPS
+  #TLS   # certsSecretPrefix: "om"
+  #TLS   tls:
+  #TLS     # enabled: true (on by default here)
+  #TLS     ca: "NAME-ca"
+  #TLS     secretRef: 
+  #TLS       name: "NAME-cert"
+
+  externalConnectivity:
+    #LB  type: LoadBalancer
+    #NP  type: NodePort # good for mini-kube (or where loadbalancer is not implemented)
+    #NP  port: 32443
+
+  applicationDatabase:
+    members: 3
+    version: "APPDBVER" # 8.2.1-ent # 7.0.5-ent # 6.0.12-ent # 5.0.7-ent # 4.4.4-ent
+    featureCompatibilityVersion: "FCV" # 8.0 recommended for MongoDB 8.2.x upgrades
+    clusterDomain: DOMAINNAME
+    # persistent: true
+    #TLS security:
+    #TLS   certsSecretPrefix: "om"
+    #TLS   tls:
+    #TLS     # enabled: true
+    #TLS     ca: "NAME-ca" # needs to be mms-ca.crt
+    #TLS     # secretRef:
+    #TLS     #   name: "om-NAME-db-cert"
+    additionalMongodConfig:
+    #TLS   net:
+    #TLS     tls:
+    #TLS       mode: "TLSMODE" # "requireTLS" "preferTLS" "allowTLS" 
+    podSpec:
+      persistence:
+        single:
+          storage: RSDISK
+      podTemplate:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                limits:
+                  cpu:    "RSCPU"
+                  memory: RSMEM
+                requests:
+                  cpu:    "RSCPU"
+                  memory: RSMEM
+            - name: mongodb-agent
+              resources:
+                limits:
+                  cpu: "0.15"
+                  memory: 100Mi
+                requests:
+                  cpu: "0.1"
+                  memory: 75Mi
+            - name: mongodb-agent-monitoring
+              resources:
+                limits:
+                  cpu: "0.15"
+                  memory: 100Mi
+                requests:
+                  cpu: "0.1"
+                  memory: 75Mi
+
+  configuration:
+    #mms.userSvcClass: "MMSUSERSVCCLASS"
+    mms.ignoreInitialUiSetup: "true"
+    mms.adminEmailAddr:   MMSADMINEMAILADDR
+    mms.fromEmailAddr:    MMSEMAIL
+    mms.replyToEmailAddr: MMSEMAIL
+    mms.mail.hostname: "MMSMAILHOSTNAME"
+    mms.mail.username: "MMSMAILUSERNAME"
+    mms.mail.password: "MMSMAILPASSWORD"
+    mms.mail.port: "25"
+    mms.mail.ssl: "false"
+    mms.mail.transport: smtp
+    mms.user.bypassInviteForExistingUsers: "true"
+    mms.publicApi.whitelistEnabled: "false"
+    mms.ldap.bindDn: "MMSLDAPBINDDN"
+    mms.ldap.bindPassword: MMSLDAPBINDPASSWORD
+    mms.ldap.global.role.owner: "MMSLDAPGLOBALROLEOWNER"
+    mms.ldap.group.baseDn: "MMSLDAPGROUPBASEDN"
+    mms.ldap.group.member: MMSLDAPGROUPMEMBER
+    mms.ldap.url: "MMSLDAPURL"
+    mms.ldap.user.baseDn: "MMSLDAPUSERBASEDN"
+    mms.ldap.user.email: "MMSLDAPUSEREMAIL"
+    mms.ldap.user.firstName: MMSLDAPUSERFIRSTNAME
+    mms.ldap.user.lastName: MMSLDAPUSERLASTNAME
+    mms.ldap.user.group: MMSLDAPUSERGROUP # deprecated
+    mms.ldap.user.searchAttribute: MMSLDAPUSERSEARCHATTRIBUTE
+    automation.versions.source: remote # hybrid
+    mongodb.release.autoDownload: "true" # stop downloads of binaries (unless you need to demo recovery)
+    mongodb.release.autoDownload.enterprise: "true"
+    mongodb.release.modulePreference: enterpriseRequired
+    #TLS brs.queryable.pem: /opt/mongodb/mms/secrets/queryable-backup.pem # stored in a secret
+    brs.queryable.expiration: "3600000"
+    # Improved monitoring ingestion
+    #PERF ingestion.thread.count: "64"
+    #PERF ping.thread.count: "32"
+    #PERF mms.monitoring.agentlog.writers: "16"
+    #PERF mms.monitoring.ingestion.databasenames.poolsize: "16"
+    #PERF mms.monitoring.ingestion.diskpartition.poolsize: "16"
+    #PERF mms.monitoring.ingestion.groupupdate.poolsize:  "8"
+    #PERF mms.monitoring.ingestion.hostping.poolsize:  "32"
+    #PERF mms.monitoring.ingestion.hostversionchange.poolsize:  "8"
+    #PERF mms.monitoring.ingestion.ipaddresschange.poolsize:  "8"
+    #PERF mms.monitoring.ingestion.hostlogs.poolsize: "16"
+    #PERF mms.monitoring.ingestion.newrelic.poolsize: "16"
+    #PERF mms.monitoring.ingestion.profiler.poolsize: "16"
+    #PERF mms.monitoring.ingestion.shardchunkcount.poolsize: "16"
+    #PERF mms.monitoring.ingestion.totalstoragecache.poolsize: "16"
+    #PERF mms.monitoring.rrd.rawdbperf.thread.count: "16"
+    #PERF mms.monitoring.rrd.rawdbperf.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawdbstorage.thread.count: "16"
+    #PERF mms.monitoring.rrd.rawdbstorage.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawdisk.thread.count:  "32"
+    #PERF mms.monitoring.rrd.rawdisk.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawhost.thread.count:  "32"
+    #PERF mms.monitoring.rrd.rawhost.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawnamespace.thread.count: "16"
+    #PERF mms.monitoring.rrd.rawnamespace.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawprocess.thread.count:  "32"
+    #PERF mms.monitoring.rrd.rawprocess.batch.size: "1000"
+    #PERF mms.monitoring.rrd.rawsystem.thread.count:  "32"
+    #PERF mms.monitoring.rrd.rawsystem.batch.size: "1000"
+
+  backup:
+    enabled: OMBACKUP
+    headDB:
+      storage: BDDISK # optional. Default storage is 30G
+    members: 1 # Configures the number of backup daemons to create (default 1)
+    #DEMO jvmParameters: ["-Xms1024m", "-Xmx1536m"] # 1M is a good size for a demo -- comment out for larger clusters in production
+    opLogStores:
+      - name: oplog
+        mongodbResourceRef:
+          name: NAME-oplog-NAME-oplog
+        mongodbUserRef:
+          name: NAME-oplog-NAME-oplog-admin
+    blockStores:
+      - name: blockstore
+        mongodbResourceRef:
+          name: NAME-blockstore-NAME-blockstore
+        mongodbUserRef:
+          name: NAME-blockstore-NAME-blockstore-admin
+    statefulSet:
+      spec:
+        template:
+          spec:
+            containers:
+              - name: mongodb-backup-daemon
+                resources: # ~2Gi is good size for a demo -- use 5Gi for larger clusters in production
+                  limits:
+                    cpu:    "BDCPU"
+                    memory: BDMEMLIM
+                  requests:
+                    cpu:    "BDCPU"
+                    memory: BDMEMREQ

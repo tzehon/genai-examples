@@ -1,0 +1,25 @@
+# Configuration with credentials
+scripts/init.conf
+scripts/deploy_*.conf
+
+# Generated YAML files
+scripts/mdb_*.yaml
+scripts/mdbom_*.yaml
+scripts/mdbuser_*.yaml
+templates/*.yaml.generated
+
+# Certificate files (sensitive)
+certs/*.pem
+certs/*.key
+certs/*.crt
+certs/*.csr
+certs/*.srl
+bin/certs/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db

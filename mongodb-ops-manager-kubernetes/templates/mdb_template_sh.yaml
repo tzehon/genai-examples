@@ -1,0 +1,178 @@
+---
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: PROJECT-NAME 
+  namespace: NAMESPACE
+spec:
+  version: "VERSION" # 8.2.1-ent # 7.0.5-ent
+  featureCompatibilityVersion: "FCV" # 8.0 recommended for MongoDB 8.2.x upgrades
+  clusterDomain: DOMAINNAME
+  type: ShardedCluster
+  shardCount: SHARDS
+  mongodsPerShardCount: 3
+  mongosCount: MONGOS
+  configServerCount: 3
+  opsManager:
+    configMapRef:
+      name: PROJECT-NAME # Must match metadata.name in ConfigMap file
+  credentials: NAMESPACE-OPSMANAGER-admin-key
+  persistent: true
+  # podSpec:
+  #   cpu: "0.5"
+  #   # note: it's important to always specify memory otherwise wired tiger cache will be calculated incorrectly and
+  #   # monitoring tools will report the size of Kubernetes node instead of the real size of the container
+  #   memory: 500 Mi  # 2Gi
+  #   persistence:
+  #     single:
+  #       storage: 1Gi # 2Gi
+  mongos:
+    # optional. Allows to pass custom configuration for mongos processes
+    additionalMongodConfig:
+    #TLS   net:
+    #TLS     tls:
+    #TLS       mode: "requireTLS" # "requireTLS" "preferTLS" "allowTLS"
+      # systemLog:
+      #   logAppend: true
+      #   verbosity: 4
+  configSrv:
+    additionalMongodConfig:
+      operationProfiling:
+        mode: "off" # "slowOp"
+        slowOpThresholdMs: 100
+    #TLS   net:
+    #TLS     tls:
+    #TLS       mode: "requireTLS" # "requireTLS" "preferTLS" "allowTLS"
+  shard:
+    additionalMongodConfig:
+    #TLS   net:
+    #TLS     tls:
+    #TLS       mode: "requireTLS" # "requireTLS" "preferTLS" "allowTLS"
+    # optional. Allows to pass custom configuration for Shards mongod processes
+    #  storage:
+    #    journal:
+    #      commitIntervalMs: 50
+  mongosPodSpec:
+    podTemplate:
+      spec:
+        containers:
+          - name: mongodb-enterprise-database
+            resources:
+              limits:
+                cpu: "MSCPU"
+                memory: "MSMEM"
+    # podAntiAffinityTopologyKey: rackId
+    # nodeAffinity:
+    #   preferredDuringSchedulingIgnoredDuringExecution:
+    #   - weight: 1
+    #     preference:
+    #       matchExpressions:
+    #       - key: another-node-label-key
+    #         operator: In
+    #         values:
+    #         - another-node-label-value
+  configSrvPodSpec:
+    # `podTemplate.spec.containers[].resources` should be specified otherwise, WiredTiger
+    # cache won't be calculated properly by MongoDB daemon.
+    podTemplate:
+      spec:
+        containers:
+          - name: mongodb-enterprise-database
+            # For more information about Pod and container resource management, see:
+            # https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            resources:
+              limits:
+                cpu: "CSCPU"
+                memory: "CSMEM"
+    # For podAffinity and nodeAffinity see Kubernetes Docs
+    # https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+    # podAntiAffinityTopologyKey: kubernetes.io/hostname
+    # podAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #   - labelSelector:
+    #       matchExpressions:
+    #       - key: security
+    #         operator: In
+    #         values:
+    #         - S1
+    #     topologyKey: failure-domain.beta.kubernetes.io/zone
+    #
+    # If "persistence" element is omitted then Operator uses the default size
+    # (5G) for mounting single Persistent Volume for config server.
+    #
+    persistence:
+      single:
+        storage: 1Gi
+  shardPodSpec:
+    podTemplate:
+      spec:
+        containers:
+          - name: mongodb-enterprise-database
+            resources:
+              limits:
+                cpu: "RSCPU"
+                memory: "RSMEM"
+    persistence:
+      single:
+        storage: RSDISK
+      # multiple:
+      #   # if the child of "multiple" is omitted then the default size will be used.
+      #   # 16G for "data", 1G for "journal", 3Gb for "logs"
+      #   data:
+      #     storage: 5Gi
+      #   logs:
+      #     storage: 1Gi
+      #     #storageClass: standard
+  #exposedExternally: true # Deprecated
+  #EXPOSE externalAccess:
+  #EXPOSE   externalService:
+  #EXPOSE     annotations:
+  #EXPOSE     # cloud-specific annotations for the service
+  #EXPOSE     spec:
+  #EXPOSE       type: SERVICETYPE
+  #EXPOSE       # port: 27017
+  security:
+    #TLS certsSecretPrefix: mdb # provide custom x509 certificates (keys and certs)
+    #TLS tls:
+    #TLS   ca: ca-pem # provide a custom certificate authority (cert in a pem file)
+        #  enabled: true # false # deprecated in 1.16
+        #  secretRef:
+        #    prefix: mdb # same as certsSecretPrefix (not needed)
+        #    name: mdb-mysharded-cert
+        # The operator will look for secrets with the following names:
+        # mdb-${metadata.name}-mongos-cert
+        # mdb-${metadata.name}-config-cert
+        # mdb-${metadata.name}-<x>-cert
+        # Where x is all numbers between 0 and the number of shards (excluded)
+    authentication:
+      enabled : true # false
+      #internalCluster: "X509"
+      agents: 
+        mode: "SCRAM"
+      modes: [ "SCRAM" X509M LDAPM ]
+      #LDAP  ldap:  # Enabled LDAP Authentication Mode # LDAP related configuration
+      #LDAP    # Specify the hostname:port combination of one or more LDAP servers
+      #LDAP    servers:
+      #LDAP      - "LDAPSERVER"
+      #LDAP    # Specify the LDAP Distinguished Name to which MongoDB binds when connecting to the LDAP server
+      #LDAP    bindQueryUser: "LDAPBINDQUERYUSER"
+      #LDAP    # Specify the password with which MongoDB binds when connecting to an LDAP server. 
+      #LDAP    #  This is a reference to a Secret Kubernetes Object containing one "password" key.
+      #LDAP    bindQueryPasswordSecretRef:
+      #LDAP      name: "PROJECT-NAME-ldapsecret"
+      #LDAP    # Select True to validate the LDAP server configuration or False to skip validation.
+      #LDAP    validateLDAPServerConfig: false
+      #LDAP    # LDAP-formatted query URL template executed by MongoDB to obtain the LDAP groups that the user belongs to
+      #LDAP    authzQueryTemplate: "LDAPAUTHZQUERYTEMPLATE"
+      #LDAP    # Maps the username provided to mongod or mongos for authentication to an LDAP Distinguished Name (DN).
+      #LDAP    userToDNMapping: 'LDAPUSERTODNMAPPING'
+      #LDAP    # Specify how long an authentication request should wait before timing out. In milliseconds.
+      #LDAP    timeoutMS: LDAPTIMEOUTMS
+      #LDAP    # Specify how long MongoDB waits to flush the LDAP user cache. In seconds.
+      #LDAP    userCacheInvalidationInterval: LDAPUSERCACHEINVALIDATIONINTERVAL
+      #LDAPT   # Set to "tls" to use LDAP over TLS. Leave blank or set to none if server does not accept TLS.
+      #LDAPT   transportSecurity: "LDAPTLS"
+      #LDAPT   # ConfigMap containing a CA certificate that validates the LDAP server's TLS certificate.
+      #LDAPT   caConfigMapRef:
+      #LDAPT     name: "LDAPCERTMAPNAME"
+      #LDAPT     key: "LDAPKEY"
