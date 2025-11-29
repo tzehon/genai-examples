@@ -89,8 +89,6 @@ vi init.conf  # Set your credentials and preferences
 grep opsMgrExtUrl init.conf
 ```
 
-For Docker Desktop or Minikube, the launch script auto-detects and adjusts settings (NodePort, reduced resources).
-
 ## Installation
 
 ### Step 1: Configure Environment
