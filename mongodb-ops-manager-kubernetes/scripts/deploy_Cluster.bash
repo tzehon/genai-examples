@@ -290,8 +290,8 @@ then
       # Create a secret for the member certs for TLS
       cert="-cert"
       [[ "${ctype}" == "agent" ]] && cert="-certs"
-      "${PWD}/certs/make_sharded_certs.bash" "${fullName}" ${ctype} ${cert}
-      kubectl -n ${namespace} apply -f "${PWD}/certs/certs_mdb-${fullName}-${ctype}${cert}.yaml"
+      "${PWD}/../certs/make_sharded_certs.bash" "${fullName}" ${ctype} ${cert}
+      kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-${ctype}${cert}.yaml"
       done
     fi
   else 
@@ -300,14 +300,14 @@ then
     if [[ ${makeCerts} == true ]]
     then
       kubectl -n ${namespace} delete secret mdb-${fullName}-cert > /dev/null 2>&1
-      "${PWD}/certs/make_cluster_certs.bash" "${fullName}"
-      kubectl -n ${namespace} apply -f "${PWD}/certs/certs_mdb-${fullName}-cert.yaml"
+      "${PWD}/../certs/make_cluster_certs.bash" "${fullName}"
+      kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-cert.yaml"
 
       ctype="agent"
       cert="-certs"
       kubectl -n ${namespace} delete secret mdb-${fullName}-${ctype}${cert} > /dev/null 2>&1
-      "${PWD}/certs/make_sharded_certs.bash" "${fullName}" ${ctype} ${cert}
-      kubectl -n ${namespace} apply -f "${PWD}/certs/certs_mdb-${fullName}-${ctype}${cert}.yaml"
+      "${PWD}/../certs/make_sharded_certs.bash" "${fullName}" ${ctype} ${cert}
+      kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-${ctype}${cert}.yaml"
     fi
   fi # end if sharded or replicaset
 

@@ -80,21 +80,21 @@ then
     then
     printf "%s\n" "Making various certs for OM and the OM AppDB ..."
     # Create certs for OM and App-db
-    rm "${PWD}/certs/${name}-[svc,db]".* "${PWD}/certs/queryable-backup.pem" > /dev/null 2>&1
-    "${PWD}/certs/make_OM_certs.bash" ${name}
+    rm "${PWD}/../certs/${name}-[svc,db]".* "${PWD}/../certs/queryable-backup.pem" > /dev/null 2>&1
+    "${PWD}/../certs/make_OM_certs.bash" ${name}
     # create appdb cert request
-    kubectl apply -f "${PWD}/certs/certs_om-${name}-db-cert.yaml" 
+    kubectl apply -f "${PWD}/../certs/certs_om-${name}-db-cert.yaml"
     # For enablement of TLS (https) - provide certs and certificate authority
     # <prefix>-<metadata.name>-cert - need the specific keyname server.pem and queryable-backup.pem
     kubectl delete secret         ${name}-cert > /dev/null 2>&1
     kubectl create secret generic ${name}-cert \
-        --from-file="server.pem=${PWD}/certs/${name}-svc.pem" \
-        --from-file="${PWD}/certs/queryable-backup.pem" 
+        --from-file="server.pem=${PWD}/../certs/${name}-svc.pem" \
+        --from-file="${PWD}/../certs/queryable-backup.pem"
     # Configmap used for OM to get the CA - need specific keynames ca-pem and mms-ca.crt
     kubectl delete configmap ${name}-ca > /dev/null 2>&1
     kubectl create configmap ${name}-ca \
-        --from-file="ca-pem=${PWD}/certs/ca.pem" \
-        --from-file="mms-ca.crt=${PWD}/certs/ca.pem" 
+        --from-file="ca-pem=${PWD}/../certs/ca.pem" \
+        --from-file="mms-ca.crt=${PWD}/../certs/ca.pem" 
     fi
 tlsr=""
 else
@@ -104,7 +104,7 @@ tlsr="#TLS "
         # <prefix>-<metadata.name>-cert
         kubectl delete secret         ${name}-cert > /dev/null 2>&1
         kubectl create secret generic ${name}-cert \
-            --from-file="${PWD}/certs/queryable-backup.pem"
+            --from-file="${PWD}/../certs/queryable-backup.pem"
     fi
 fi
 tlsMode=${tlsMode:-"requireTLS"}
@@ -129,7 +129,7 @@ else
 fi
 
 # make manifest from template
-cat mdbom_template.yaml | sed \
+cat ../templates/mdbom_template.yaml | sed \
     -e "s/VERSION/$omVer/" \
     -e "s/DOMAINNAME/$clusterDomain/" \
     -e "s/APPDBVER/$appdbVer/" \
