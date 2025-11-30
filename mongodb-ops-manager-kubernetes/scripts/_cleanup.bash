@@ -57,8 +57,20 @@ cleanup_k8s() {
         return
     fi
 
-    echo "Deleting namespace: ${namespace:-mongodb}"
-    kubectl delete namespace ${namespace:-mongodb} --ignore-not-found --timeout=120s
+    ns=${namespace:-mongodb}
+
+    # Uninstall Helm release first (if helm is available)
+    if command -v helm &> /dev/null; then
+        echo "Uninstalling Helm release: mongodb-kubernetes"
+        helm uninstall mongodb-kubernetes -n ${ns} 2>/dev/null || true
+    fi
+
+    echo "Deleting namespace: ${ns}"
+    kubectl delete namespace ${ns} --ignore-not-found --timeout=120s
+
+    # Wait for namespace to be fully terminated
+    echo "Waiting for namespace to be fully deleted..."
+    kubectl wait --for=delete namespace/${ns} --timeout=120s 2>/dev/null || true
 
     echo "Kubernetes cleanup complete"
 }

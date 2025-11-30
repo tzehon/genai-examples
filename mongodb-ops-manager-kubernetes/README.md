@@ -302,18 +302,34 @@ bin/get_connection_string.bash -n myreplicaset
 
 ### Cleanup
 
-```bash
-# Clean local files only (before redeploy)
-./_cleanup.bash -f
+Use `_cleanup.bash` to clean up resources before redeploying or to tear down the environment:
 
-# Delete K8s resources only
+```bash
+# Restart deployment (recommended before re-running _launch.bash)
+# Uninstalls Helm release, deletes namespace, waits for cleanup
 ./_cleanup.bash -k
 
-# Full cleanup (files + K8s)
+# Clean local files only (certs, manifests, configs)
+./_cleanup.bash -f
+
+# Full cleanup (Kubernetes resources + local files)
 ./_cleanup.bash -a
 
-# Delete GKE cluster(s)
+# Delete GKE cluster(s) entirely
 ./_cleanup.bash -c
+```
+
+| Option | Description |
+|--------|-------------|
+| `-k` | **Kubernetes only**: Uninstalls MCK Helm release, deletes namespace, waits for termination |
+| `-f` | **Files only**: Removes generated certs, manifests, and config files |
+| `-a` | **All**: Full cleanup of both K8s resources and local files (prompts for confirmation) |
+| `-c` | **Cluster**: Deletes the GKE cluster(s) entirely (prompts for confirmation) |
+
+**Typical workflow to restart a failed deployment:**
+```bash
+./_cleanup.bash -k   # Clean up Kubernetes resources
+./_launch.bash       # Re-run the deployment
 ```
 
 ## Troubleshooting
