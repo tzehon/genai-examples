@@ -58,18 +58,17 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| Kubernetes | 1.16+ | Tested on GKE, EKS, OpenShift, Docker Desktop, Minikube |
+| Kubernetes | 1.16+ | Tested on GKE, EKS, OpenShift |
 | kubectl | Latest | Kubernetes CLI |
 | Helm | 3.x | For MCK operator installation |
-| gcloud (optional) | Latest | For GKE cluster creation |
+| gcloud | Latest | For GKE cluster creation |
 | cfssl (optional) | Latest | For custom CA generation |
 
 ### Resource Requirements
 
-| Environment | CPU | Memory | Disk |
-|-------------|-----|--------|------|
-| **Demo/Dev** | 8 cores | 11 GB (+2GB swap) | 50 GB |
-| **Production** | 48-64 cores | 192-256 GB | 2-5 TB |
+| CPU | Memory | Disk |
+|-----|--------|------|
+| 48-64 cores | 192-256 GB | 2-5 TB |
 
 ## Quick Start
 
@@ -87,6 +86,14 @@ vi init.conf  # Set your credentials and preferences
 
 # 4. Get Ops Manager URL
 grep opsMgrExtUrl init.conf
+
+# 5. Get API Key (for creating alerts, API access, etc.)
+bin/get_key.bash
+# Or from K8s secret:
+kubectl get secret mongodb-opsmanager-admin-key -n mongodb \
+  -o jsonpath='{.data.publicKey}' | base64 -d && echo
+kubectl get secret mongodb-opsmanager-admin-key -n mongodb \
+  -o jsonpath='{.data.privateKey}' | base64 -d && echo
 ```
 
 ## Installation
@@ -111,7 +118,7 @@ Key settings to configure:
 | `omBackup` | Enable backup infrastructure | `true` |
 | `clusterDomain` | External domain name | `mdb.com` |
 
-### Step 2: Create Kubernetes Cluster (Optional)
+### Step 2: Create Kubernetes Cluster
 
 For GKE clusters:
 
@@ -120,7 +127,7 @@ cd scripts
 ./0_make_k8s.bash
 ```
 
-This creates a GKE cluster with appropriate node pools. For other providers, ensure your cluster meets the resource requirements above.
+This creates a GKE cluster with appropriate node pools. For other providers (EKS, OpenShift), ensure your cluster meets the resource requirements above.
 
 ### Step 3: Deploy the Stack
 
@@ -192,15 +199,6 @@ mongodb-ops-manager-kubernetes/
 ```
 
 ## Configuration Options
-
-### Deployment Modes
-
-| Mode | Use Case | Resources |
-|------|----------|-----------|
-| **Demo** | Local testing (Docker Desktop, Minikube) | Minimal, NodePort |
-| **Production** | Cloud deployments (GKE, EKS) | Full, LoadBalancer |
-
-Auto-detection: The `_launch.bash` script detects Docker Desktop/Minikube and switches to demo mode automatically.
 
 ### TLS Configuration
 
