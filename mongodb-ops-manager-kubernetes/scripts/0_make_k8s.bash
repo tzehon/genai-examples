@@ -9,7 +9,12 @@ verb=create
 domain="${clusterDomain:-mdb.com}"
 nodesPerRegion="2" # 1 = 3 total nodes, 2 = 6 total nodes (2 per zone)x(3 zones)
 nodesPerZone="3" # 3 total nodes per zone
-expire=$(date -v+3d +%Y-%m-%d)
+# Calculate expire date (3 days from now) - works on both macOS and Linux
+if date -v+1d &>/dev/null; then
+  expire=$(date -v+3d +%Y-%m-%d)  # macOS
+else
+  expire=$(date -d "+3 days" +%Y-%m-%d)  # Linux
+fi
 centralType="e2-standard-8"
 memberType="e2-standard-4"
 
