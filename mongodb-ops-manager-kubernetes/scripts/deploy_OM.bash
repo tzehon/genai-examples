@@ -1,6 +1,7 @@
 #!/bin/bash
 
-d=$( dirname "$0" )
+# Resolve to absolute path so script works when called from PATH
+d=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${d}"
 source init.conf
 
@@ -218,6 +219,6 @@ do
 done
 
 # this is critical to get the name and IP for OM for the rest of the deployment
-update_initconf_hostnames.bash -o ${name}
+"${d}/../bin/update_initconf_hostnames.bash" -o ${name}
 
 exit 0

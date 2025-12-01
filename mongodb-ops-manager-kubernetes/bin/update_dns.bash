@@ -13,7 +13,10 @@ do
 done
 shift "$(($OPTIND -1))"
 
-source init.conf
+# Resolve bin directory and add to PATH so scripts can find each other
+_bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+PATH="${_bindir}:${PATH}"
+source "${_bindir}/../scripts/init.conf"
 ips=( $( get_ips.bash -n "${name}" ) )
 [[ $? != 0 ]] && exit 1
 

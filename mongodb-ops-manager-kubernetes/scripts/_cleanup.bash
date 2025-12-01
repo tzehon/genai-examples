@@ -3,7 +3,8 @@
 # Cleanup script for MongoDB Ops Manager on Kubernetes
 # Run this before redeploying with _launch.bash
 
-d=$( dirname "$0" )
+# Resolve to absolute path so script works when called from PATH
+d=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${d}"
 source init.conf 2>/dev/null || true
 

@@ -2,7 +2,10 @@
 
 # script to find out if there is an existing non-deleted Organization and what is the id
 
-source init.conf
+# Resolve bin directory and add to PATH so scripts can find each other
+_bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+PATH="${_bindir}:${PATH}"
+source "${_bindir}/../scripts/init.conf"
 test -f ${deployconf} && source ${deployconf}
 
 while getopts 'i:o:h' opt

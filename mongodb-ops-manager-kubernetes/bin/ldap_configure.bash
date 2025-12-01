@@ -7,7 +7,10 @@
 #   --env LDAP_PASSWORDS="Mongodb1,Mongodb1" \
 #   -p "389:1389" bitnami/openldap:latest
 
-source init.conf
+# Resolve bin directory and add to PATH so scripts can find each other
+_bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+PATH="${_bindir}:${PATH}"
+source "${_bindir}/../scripts/init.conf"
 [[ ${demo} ]] && serviceType="NodePort"
 
 kubectl config set-context $(kubectl config current-context) --namespace=${namespace}

@@ -1,7 +1,11 @@
-#!/bin/bash 
+#!/bin/bash
+
+# Resolve bin directory and add to PATH so scripts can find each other
+_bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+PATH="${_bindir}:${PATH}"
 
 # creates ${deployconf} with the out from below
-source init.conf
+source "${_bindir}/../scripts/init.conf"
 
 while getopts 'i:o:u:h' opt
 do

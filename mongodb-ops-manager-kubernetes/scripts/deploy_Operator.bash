@@ -1,6 +1,7 @@
 #!/bin/bash
 
-d=$( dirname "$0" )
+# Resolve to absolute path so script works when called from PATH
+d=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${d}"
 source init.conf
 
@@ -13,9 +14,8 @@ source init.conf
 kubectl config set-context $(kubectl config current-context) --namespace=${namespace}
 kubectl create namespace ${namespace} 2>/dev/null || true
 
-# Delete old operator deployments if they exist (MEKO)
+# Delete old operator deployment if it exists (MEKO)
 kubectl delete deployment mongodb-enterprise-operator -n ${namespace} > /dev/null 2>&1
-kubectl delete deployment mongodb-enterprise-operator-multi-cluster -n ${namespace} > /dev/null 2>&1
 
 # Check if Helm is available (required for MCK)
 if command -v helm &> /dev/null; then

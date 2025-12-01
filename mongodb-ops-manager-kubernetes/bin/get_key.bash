@@ -1,6 +1,9 @@
 #!/bin/bash
 
-source init.conf
+# Resolve bin directory and add to PATH so scripts can find each other
+_bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+PATH="${_bindir}:${PATH}"
+source "${_bindir}/../scripts/init.conf"
 test -e ${deployconf} && source ${deployconf}
 
 adminUser="$(     kubectl get secret admin-user-credentials           -o json -n ${namespace} | jq .data.Username   | sed -e's/"//g'| base64 --decode )"
