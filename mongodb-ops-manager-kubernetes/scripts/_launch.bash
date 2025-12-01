@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Timing functions
+# Timing functions (bash 3.x compatible - no associative arrays)
 _start_time=$SECONDS
-declare -A _step_times
+_step_names=()
+_step_durations=()
 
 format_duration() {
     local seconds=$1
@@ -18,8 +19,20 @@ time_step() {
     "$@"
     local rc=$?
     local duration=$((SECONDS - start))
-    _step_times["$step_name"]=$duration
+    _step_names+=("$step_name")
+    _step_durations+=($duration)
     return $rc
+}
+
+_get_duration() {
+    local name="$1"
+    local i
+    for i in "${!_step_names[@]}"; do
+        if [[ "${_step_names[$i]}" == "$name" ]]; then
+            echo "${_step_durations[$i]}"
+            return
+        fi
+    done
 }
 
 print_summary() {
@@ -27,8 +40,9 @@ print_summary() {
     printf "\n%s\n" "=== Deployment Summary ==="
     # Print steps in order
     for step in "Operator" "Ops Manager" "Oplog DB" "Blockstore DB" "Organization" "ReplicaSet" "Sharded" "Hostname update"; do
-        if [[ -n "${_step_times[$step]}" ]]; then
-            printf "%-16s %s\n" "${step}:" "$(format_duration ${_step_times[$step]})"
+        local duration=$(_get_duration "$step")
+        if [[ -n "$duration" ]]; then
+            printf "%-16s %s\n" "${step}:" "$(format_duration $duration)"
         fi
     done
     printf "%s\n" "--------------------------"
