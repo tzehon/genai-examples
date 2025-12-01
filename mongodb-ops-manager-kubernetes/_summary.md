@@ -1,0 +1,7 @@
+A comprehensive demonstration project deploys [MongoDB Ops Manager](https://www.mongodb.com/docs/ops-manager/current/) on Kubernetes using [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/), providing automated setup for TLS encryption via cert-manager, backup infrastructure with point-in-time recovery, LDAP integration, and external access configurations. The project includes scripts for GKE cluster creation, automated deployment of Ops Manager 8.0.x with a 3-node replica set application database, backup oplog and blockstore infrastructure, and managed MongoDB clusters (both ReplicaSet and sharded). Designed explicitly for learning and demonstration purposes rather than production use, it evolved from the deprecated MEKO operator to MCK with Helm-based installation, replacing manual certificate management with cert-manager automation and supporting split-horizon DNS for external connectivity.
+
+**Key Components:**
+- **Automated deployment**: Single `_launch.bash` script deploys entire stack (MCK operator, cert-manager, Ops Manager, backup infrastructure)
+- **Backup**: Automatic snapshots every 24 hours with configurable retention and 1-day point-in-time recovery window
+- **Resource requirements**: 48-64 cores, 192-256 GB RAM, 2-5 TB disk for full deployment
+- **Cleanup utility**: `_cleanup.bash` with options for Kubernetes-only (`-k`), files-only (`-f`), or full cleanup (`-a`)

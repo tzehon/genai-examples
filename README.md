@@ -70,15 +70,13 @@ for date, folder in projects:
 ]]]-->
 ### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
 
-MongoDB administrators can deploy production-ready [MongoDB Ops Manager](https://www.mongodb.com/docs/ops-manager/current/) on Kubernetes using this complete infrastructure setup built on [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/). The project automates deployment of Ops Manager 8.0.x with a 3-node application database, automated backup infrastructure (oplog + blockstore for point-in-time recovery), TLS encryption via cert-manager, LDAP integration, and external access configurations for both replica sets and sharded clusters. A single `_launch.bash` script orchestrates the entire stack, or administrators can use step-by-step scripts to deploy the MCK operator, Ops Manager, and managed MongoDB clusters independently.
+A comprehensive demonstration project deploys [MongoDB Ops Manager](https://www.mongodb.com/docs/ops-manager/current/) on Kubernetes using [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/), providing automated setup for TLS encryption via cert-manager, backup infrastructure with point-in-time recovery, LDAP integration, and external access configurations. The project includes scripts for GKE cluster creation, automated deployment of Ops Manager 8.0.x with a 3-node replica set application database, backup oplog and blockstore infrastructure, and managed MongoDB clusters (both ReplicaSet and sharded). Designed explicitly for learning and demonstration purposes rather than production use, it evolved from the deprecated MEKO operator to MCK with Helm-based installation, replacing manual certificate management with cert-manager automation and supporting split-horizon DNS for external connectivity.
 
-**Key Features:**
-- Complete backup infrastructure with configurable snapshot schedules and retention policies
-- TLS/SSL automation using cert-manager with self-signed or custom CA options
-- Split-horizon DNS for replica sets and LoadBalancer exposure for sharded cluster mongos
-- LDAP integration for centralized authentication (Ops Manager + database users)
-- Production-ready templates for both replica set and sharded cluster deployments
-- Comprehensive cleanup utilities for redeployment and troubleshooting scenarios
+**Key Components:**
+- **Automated deployment**: Single `_launch.bash` script deploys entire stack (MCK operator, cert-manager, Ops Manager, backup infrastructure)
+- **Backup**: Automatic snapshots every 24 hours with configurable retention and 1-day point-in-time recovery window
+- **Resource requirements**: 48-64 cores, 192-256 GB RAM, 2-5 TB disk for full deployment
+- **Cleanup utility**: `_cleanup.bash` with options for Kubernetes-only (`-k`), files-only (`-f`), or full cleanup (`-a`)
 
 ### [mongodb-failover-tester](https://github.com/tzehon/research/tree/main/mongodb-failover-tester) (2025-11-28)
 
