@@ -1,6 +1,6 @@
 # MongoDB Ops Manager on Kubernetes
 
-Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using MongoDB Controllers for Kubernetes (MCK). This project provides a complete, production-ready setup including TLS encryption, backup infrastructure, LDAP integration, and multi-cluster support.
+Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using MongoDB Controllers for Kubernetes (MCK). This project provides a complete, production-ready setup including TLS encryption, backup infrastructure, LDAP integration, and external access options.
 
 ## Key Features
 
@@ -8,7 +8,6 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 - **Automated Backup** with oplog + blockstore infrastructure for point-in-time recovery
 - **TLS/SSL Encryption** via cert-manager with self-signed or custom CA
 - **LDAP Integration** for both Ops Manager and database user authentication
-- **Multi-Cluster Support** using Istio service mesh for cross-cluster deployments
 - **External Access** via split-horizon DNS or LoadBalancer/NodePort services
 - **ReplicaSet & Sharded Clusters** with production-ready configurations
 
@@ -254,23 +253,6 @@ Default schedule:
 - Retention: 2 days (snapshots), 2 weeks (weekly), 1 month (monthly)
 - Point-in-time: 1 day window
 
-## Multi-Cluster Deployment
-
-For deploying across multiple Kubernetes clusters:
-
-```bash
-# 1. Create multi-cluster infrastructure (4 GKE clusters with Istio)
-./0_make_k8s.bash  # Creates central + 3 member clusters
-
-# 2. Deploy cross-cluster MongoDB
-./_mc_launch.bash
-```
-
-This creates:
-- 5-node ReplicaSets spanning 3 clusters
-- Istio service mesh for cross-cluster communication
-- VPC-wide DNS for service discovery
-
 ## Common Operations
 
 ### Retrieve API Keys
@@ -380,9 +362,7 @@ This project evolved through several major iterations:
 
 3. **cert-manager Integration** - Replaced manual cfssl certificate generation with Venafi Jetstack cert-manager for automated TLS lifecycle management.
 
-4. **Multi-Cluster Support** - Added Istio service mesh support for cross-cluster MongoDB deployments spanning multiple Kubernetes clusters.
-
-5. **External Access Improvements** - Implemented split-horizon DNS for ReplicaSets and LoadBalancer exposure for sharded cluster mongos instances.
+4. **External Access Improvements** - Implemented split-horizon DNS for ReplicaSets and LoadBalancer exposure for sharded cluster mongos instances.
 
 ## Related Projects
 
