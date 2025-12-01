@@ -2,6 +2,7 @@
 
 # Resolve bin directory and add to PATH so scripts can find each other
 _bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+_certsdir="${_bindir}/../certs"
 PATH="${_bindir}:${PATH}"
 
 while getopts 'n:g:h' opt
@@ -75,7 +76,7 @@ hn=( $( printf "${hnwp[*]%:*}" ) )
 # now remake the certs - and re-apply
 if [[ ${makeCerts} == true && ${#hn[@]} != 0 ]]
 then
-    "${PWD}/certs/make_cluster_certs.bash" "${name}" ${hn[@]}
-    kubectl ${ns} apply -f "${PWD}/certs/certs_mdb-${name}-cert.yaml"
+    "${_certsdir}/make_cluster_certs.bash" "${name}" ${hn[@]}
+    kubectl ${ns} apply -f "${_certsdir}/certs_mdb-${name}-cert.yaml"
 fi
 exit

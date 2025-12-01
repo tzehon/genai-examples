@@ -2,6 +2,7 @@
 
 # Resolve bin directory and add to PATH so scripts can find each other
 _bindir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+_certsdir="${_bindir}/../certs"
 PATH="${_bindir}:${PATH}"
 source "${_bindir}/../scripts/init.conf"
 
@@ -71,14 +72,14 @@ if [[ ${serviceType} != "" && ${internal} = 0 ]]
 then
 if [[ "${spec}" == "map[enabled:true]" || "${spec}" == *"refix":* || "${spec}" == *"ecret":* || "${spec}" == *\"ca\":* ]]
 then
-    test -e "${PWD}/certs/ca.pem"               || kubectl $ns get configmap ca-pem -o jsonpath="{.data['ca-pem']}" > "${PWD}/certs/ca.pem"
-    kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath="{.data.*}" | base64 --decode > "${PWD}/certs/${name}${mongos}.pem"
+    test -e "${_certsdir}/ca.pem"               || kubectl $ns get configmap ca-pem -o jsonpath="{.data['ca-pem']}" > "${_certsdir}/ca.pem"
+    kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath="{.data.*}" | base64 --decode > "${_certsdir}/${name}${mongos}.pem"
     eval version=$( kubectl $ns get ${mdbKind} ${name} -o jsonpath={.spec.version} )
     if [[ ${version%%.*} = 3 ]]
     then
-        ssltls_enabled="&ssl=true&sslCAFile=${PWD}/certs/ca.pem&sslPEMKeyFile=${PWD}/certs/${name}${mongos}.pem "
+        ssltls_enabled="&ssl=true&sslCAFile=${_certsdir}/ca.pem&sslPEMKeyFile=${_certsdir}/${name}${mongos}.pem "
     else
-        ssltls_enabled="&tls=true&tlsCAFile=${PWD}/certs/ca.pem&tlsCertificateKeyFile=${PWD}/certs/${name}${mongos}.pem "
+        ssltls_enabled="&tls=true&tlsCAFile=${_certsdir}/ca.pem&tlsCertificateKeyFile=${_certsdir}/${name}${mongos}.pem "
     fi
 fi
     fcs=\'${ecs}${ssltls_enabled}\'
