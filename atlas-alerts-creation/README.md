@@ -226,7 +226,7 @@ Ensure your API key has **Project Owner** role for the target project:
 
 ### Invalid Metric Name
 
-Some metrics may have different names depending on your Atlas version. Check the [MongoDB Atlas Alert Conditions Reference](https://www.mongodb.com/docs/atlas/reference/alert-conditions/) for the latest metric names.
+Some metrics may have different names depending on your Atlas version. See [Finding Metric Names for New Alerts](#finding-metric-names-for-new-alerts) below for how to discover available metrics.
 
 ### Verify Created Alerts
 
@@ -250,16 +250,23 @@ atlas alerts settings delete ALERT_ID --projectId YOUR_PROJECT_ID --force
 
 ## Excel File Format
 
-The Excel file should have the following columns:
+The Excel file defines **what thresholds to use**. The script's `ALERT_MAPPINGS` defines **what metric names to use**.
 
 | Column | Description |
 |--------|-------------|
-| Alert Name | Human-readable name of the alert |
-| Alert Type/Category | Category (Replica Set, Host, Cloud Backup, etc.) |
-| Low Priority Threshold | Threshold for low priority alerts |
-| High Priority Threshold | Threshold for high priority alerts |
-| Key Insights | Description of what the alert monitors |
+| Alert Name | Must exactly match a key in `ALERT_MAPPINGS` (in `create_atlas_alerts.py`) |
+| Alert Type/Category | Category (Replica Set, Host, Cloud Backup, etc.) - for documentation only |
+| Low Priority Threshold | Threshold for low priority alerts (e.g., `> 80% for 5 minutes`) |
+| High Priority Threshold | Threshold for high priority alerts (e.g., `> 90% for 5 minutes`) |
+| Key Insights | Description of what the alert monitors - for documentation only |
 | status | Can be ignored (tracking column) |
+
+**How it works:**
+1. Script reads Alert Name from Excel (e.g., "Disk read IOPS on Data Partition")
+2. Looks up that name in `ALERT_MAPPINGS` to get the metric name (e.g., `DISK_PARTITION_READ_IOPS_DATA`)
+3. Combines the metric name with the threshold from Excel to create the alert
+
+**To fix metric name errors:** Update `ALERT_MAPPINGS` in the Python script, not the Excel file.
 
 ### Threshold Format Examples
 
@@ -350,6 +357,131 @@ Edit the threshold columns in `atlas_alert_configurations.xlsx`. Supported forma
 ```
 
 4. Review generated JSON in `alerts/` directory, then deploy.
+
+## Finding Metric Names for New Alerts
+
+If you need to add a new alert type or if alerts fail with errors, you'll need to find the correct metric name that Atlas expects.
+
+**Important:** Metric names can vary between Atlas versions. The most reliable method is to create an alert manually via the UI and inspect it via the CLI/API.
+
+### Method 1: Create Manually and Inspect (Recommended)
+
+This is the most reliable method to find exact metric names:
+
+1. **Create the alert manually** in the Atlas UI:
+   - Go to your project → Alerts → Alert Settings
+   - Click "Add New Alert"
+   - Configure the alert type you want (e.g., CPU, Disk, etc.)
+   - Save the alert
+
+2. **Query the alert via Atlas CLI** to see the exact JSON structure:
+
+```bash
+# List all alert configurations in JSON format
+atlas alerts settings list --projectId YOUR_PROJECT_ID --output json > alerts.json
+
+# Search for specific alert types (e.g., CPU, DISK)
+cat alerts.json | python3 -c "import sys,json;data=json.load(sys.stdin);[print(json.dumps(a,indent=2)) for a in data.get('results',data) if 'CPU' in str(a)]"
+```
+
+Replace `'CPU'` with your search term: `'DISK'`, `'MEMORY'`, `'OPLOG'`, etc.
+
+3. **Copy the exact metric name** from the output:
+
+```json
+{
+  "metricThreshold": {
+    "metricName": "NORMALIZED_SYSTEM_CPU_USER",
+    "mode": "AVERAGE",
+    "operator": "GREATER_THAN",
+    "threshold": 80.0,
+    "units": "RAW"
+  }
+}
+```
+
+4. **Update the script** with the correct metric name in `ALERT_MAPPINGS`
+
+5. **Delete the manually created alert** (optional) and re-run the automation:
+```bash
+atlas alerts settings delete ALERT_ID --projectId YOUR_PROJECT_ID --force
+```
+
+### Method 2: Query Available Metrics via Atlas CLI
+
+Get a list of available measurements for a specific process (MongoDB instance):
+
+```bash
+# List all processes (hosts) in your project
+atlas processes list --projectId YOUR_PROJECT_ID
+
+# Get available measurements for a specific process
+# The process ID is in the format: hostname:port
+atlas metrics processes YOUR_PROCESS_ID --projectId YOUR_PROJECT_ID --granularity PT1M --period PT1H
+```
+
+Example output shows available metric names:
+```
+ASSERT_MSG
+ASSERT_REGULAR
+CONNECTIONS
+DISK_PARTITION_READ_IOPS_DATA
+DISK_PARTITION_WRITE_IOPS_DATA
+NORMALIZED_SYSTEM_CPU_USER
+SWAP_USAGE_USED
+...
+```
+
+### Method 3: Query Available Metrics via Atlas API
+
+If you prefer using the API directly:
+
+```bash
+# Get measurements for a process
+curl -u "PUBLIC_KEY:PRIVATE_KEY" --digest \
+  "https://cloud.mongodb.com/api/atlas/v2/groups/PROJECT_ID/processes/HOSTNAME:PORT/measurements?granularity=PT1M&period=PT1H"
+```
+
+### Method 4: Check Existing Alert Configurations
+
+List existing alerts to see what metric names are used:
+
+```bash
+# List all alert configurations
+atlas alerts settings list --projectId YOUR_PROJECT_ID --output json
+```
+
+This shows the full JSON configuration including `metricThreshold.metricName` for metric-based alerts.
+
+### Adding a New Alert Type to the Script
+
+Once you have the metric name, add it to the `ALERT_MAPPINGS` dictionary in `create_atlas_alerts.py`:
+
+```python
+ALERT_MAPPINGS = {
+    # ... existing mappings ...
+
+    "Your New Alert Name": {
+        "event_type": "OUTSIDE_METRIC_THRESHOLD",
+        "metric_name": "METRIC_NAME_FROM_API",
+        "units": "RAW",  # or BYTES, MILLISECONDS, SECONDS, HOURS, etc.
+    },
+}
+```
+
+Then add a corresponding row to the Excel file with the alert name and thresholds.
+
+### Common Units
+
+| Unit | When to Use |
+|------|-------------|
+| `RAW` | Counts, numbers, percentages (connections, IOPS, CPU %) |
+| `BYTES` | Memory, disk space in bytes |
+| `MILLISECONDS` | Latency measurements |
+| `SECONDS` | Time durations (replication lag) |
+| `HOURS` | Longer durations (oplog window) |
+
+**Note:** Percentage values like CPU % use `RAW` units (values 0-100), not `PERCENT`.
 
 ## Reference Documentation
 
