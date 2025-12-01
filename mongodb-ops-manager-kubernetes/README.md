@@ -1,6 +1,8 @@
 # MongoDB Ops Manager on Kubernetes
 
-Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using MongoDB Controllers for Kubernetes (MCK). This project provides a complete, production-ready setup including TLS encryption, backup infrastructure, LDAP integration, and external access options.
+> **Note:** This project is intended for **getting started, learning, and demonstration purposes only**. It is not production-ready. The scripts lack comprehensive error handling, input validation, and security hardening required for production environments.
+
+Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using MongoDB Controllers for Kubernetes (MCK). This project provides a quick-start setup including TLS encryption, backup infrastructure, LDAP integration, and external access options.
 
 ## Key Features
 
@@ -9,7 +11,7 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 - **TLS/SSL Encryption** via cert-manager with self-signed or custom CA
 - **LDAP Integration** for both Ops Manager and database user authentication
 - **External Access** via split-horizon DNS or LoadBalancer/NodePort services
-- **ReplicaSet & Sharded Clusters** with production-ready configurations
+- **ReplicaSet & Sharded Clusters** for demonstration and testing
 
 ## Architecture
 
