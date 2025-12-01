@@ -70,13 +70,15 @@ for date, folder in projects:
 ]]]-->
 ### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
 
-MongoDB Ops Manager can be deployed on Kubernetes using MongoDB Controllers for Kubernetes (MCK), providing a production-ready platform that includes automated backup infrastructure, TLS encryption via cert-manager, LDAP authentication, and support for both replica sets and sharded clusters. The project evolved from the deprecated MEKO operator to [MongoDB Controllers for Kubernetes](https://www.mongodb.com/docs/kubernetes/current/), incorporating [cert-manager](https://cert-manager.io/docs/) for automated certificate lifecycle management and Istio service mesh for multi-cluster deployments. A streamlined installation process (`_launch.bash`) automates the deployment of MCK operators, Ops Manager with a 3-node application database, backup infrastructure (oplog and blockstore), and managed MongoDB clusters, with external access via split-horizon DNS or LoadBalancer services.
+MongoDB administrators can deploy production-ready [MongoDB Ops Manager](https://www.mongodb.com/docs/ops-manager/current/) on Kubernetes using this complete infrastructure setup built on [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/). The project automates deployment of Ops Manager 8.0.x with a 3-node application database, automated backup infrastructure (oplog + blockstore for point-in-time recovery), TLS encryption via cert-manager, LDAP integration, and external access configurations for both replica sets and sharded clusters. A single `_launch.bash` script orchestrates the entire stack, or administrators can use step-by-step scripts to deploy the MCK operator, Ops Manager, and managed MongoDB clusters independently.
 
-**Key capabilities:**
-- **Complete stack deployment**: MCK operator, Ops Manager 8.0.x, backup infrastructure (oplog + blockstore), and production MongoDB clusters
-- **Enterprise features**: TLS encryption, LDAP integration, point-in-time recovery, and cross-cluster deployments via Istio
-- **Resource scale**: Designed for 48-64 cores, 192-256 GB RAM, with 2-5 TB storage for production workloads
-- **Flexible access**: Split-horizon DNS for replica sets, LoadBalancer/NodePort for sharded clusters, with automated certificate management
+**Key Features:**
+- Complete backup infrastructure with configurable snapshot schedules and retention policies
+- TLS/SSL automation using cert-manager with self-signed or custom CA options
+- Split-horizon DNS for replica sets and LoadBalancer exposure for sharded cluster mongos
+- LDAP integration for centralized authentication (Ops Manager + database users)
+- Production-ready templates for both replica set and sharded cluster deployments
+- Comprehensive cleanup utilities for redeployment and troubleshooting scenarios
 
 ### [mongodb-failover-tester](https://github.com/tzehon/research/tree/main/mongodb-failover-tester) (2025-11-28)
 
