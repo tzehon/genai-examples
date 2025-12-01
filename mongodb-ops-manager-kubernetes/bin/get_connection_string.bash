@@ -73,7 +73,8 @@ then
 if [[ "${spec}" == "map[enabled:true]" || "${spec}" == *"refix":* || "${spec}" == *"ecret":* || "${spec}" == *\"ca\":* ]]
 then
     test -e "${_certsdir}/ca.pem"               || kubectl $ns get configmap ca-pem -o jsonpath="{.data['ca-pem']}" > "${_certsdir}/ca.pem"
-    kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath="{.data.*}" | base64 --decode > "${_certsdir}/${name}${mongos}.pem"
+    _hash=$( kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath='{.data.latestHash}' | base64 -d )
+    kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath="{.data.${_hash}}" | base64 -d > "${_certsdir}/${name}${mongos}.pem"
     eval version=$( kubectl $ns get ${mdbKind} ${name} -o jsonpath={.spec.version} )
     if [[ ${version%%.*} = 3 ]]
     then
@@ -89,8 +90,7 @@ fi
 else # internal
 if [[ "${spec}" == "map[enabled:true]" || "${spec}" == *"refix":* || "${spec}" == *"ecret":* || "${spec}" == *\"ca\":* ]]
 then
-    kv=$( kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath="{.data}" | grep -o '".*":*' )
-    serverpem=$( eval printf ${kv%:*} )
+    serverpem=$( kubectl $ns get secret mdb-${name}${mongos}-cert-pem -o jsonpath='{.data.latestHash}' | base64 -d )
     if [[ ${version%%.*} = 3 ]]
     then
         ssltls_enabled="&ssl=true&sslCAFile=/mongodb-automation/tls/ca/ca-pem&sslPEMKeyFile=/mongodb-automation/tls/${serverpem}"
