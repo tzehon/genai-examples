@@ -95,30 +95,30 @@ ALERT_MAPPINGS = {
         "uses_threshold": False,
     },
 
-    # Disk I/O Alerts
+    # Disk I/O Alerts (metric names have _DATA suffix for the data partition)
     "Disk read IOPS on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "DISK_PARTITION_IOPS_READ",
+        "metric_name": "DISK_PARTITION_READ_IOPS_DATA",
         "units": "RAW",
     },
     "Disk write IOPS on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "DISK_PARTITION_IOPS_WRITE",
+        "metric_name": "DISK_PARTITION_WRITE_IOPS_DATA",
         "units": "RAW",
     },
     "Disk read latency on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "DISK_PARTITION_LATENCY_READ",
+        "metric_name": "DISK_PARTITION_READ_LATENCY_DATA",
         "units": "MILLISECONDS",
     },
     "Disk write latency on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "DISK_PARTITION_LATENCY_WRITE",
+        "metric_name": "DISK_PARTITION_WRITE_LATENCY_DATA",
         "units": "MILLISECONDS",
     },
     "Disk space % used on Data Partition": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "DISK_PARTITION_SPACE_PERCENT_USED",
+        "metric_name": "DISK_PARTITION_SPACE_USED_DATA",
         "units": "RAW",
     },
 
@@ -130,12 +130,12 @@ ALERT_MAPPINGS = {
     },
     "System: CPU (User) %": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "SYSTEM_CPU_USER",
+        "metric_name": "NORMALIZED_SYSTEM_CPU_USER",
         "units": "RAW",
     },
     "System: CPU (System) %": {
         "event_type": "OUTSIDE_METRIC_THRESHOLD",
-        "metric_name": "SYSTEM_CPU_KERNEL",
+        "metric_name": "NORMALIZED_SYSTEM_CPU_KERNEL",
         "units": "RAW",
     },
     "Page Faults": {
@@ -531,19 +531,11 @@ def create_alert_config(
     mapping: dict[str, Any],
     notification_emails: list[str],
     notification_type: str = "GROUP",
-    partition_name: Optional[str] = None,
 ) -> dict[str, Any]:
     """Create an Ops Manager alert configuration JSON structure."""
     matchers = []
-
-    # Add partition matcher for disk partition metrics
-    metric_name = mapping.get("metric_name") or ""
-    if metric_name.startswith("DISK_PARTITION_") and partition_name:
-        matchers.append({
-            "fieldName": "PARTITION_NAME",
-            "operator": "EQUALS",
-            "value": partition_name,
-        })
+    # Note: Disk partition metrics now use partition-specific metric names
+    # (e.g., DISK_PARTITION_IOPS_READ_DATA) so no matcher is needed
 
     config: dict[str, Any] = {
         "eventTypeName": mapping["event_type"],
@@ -664,7 +656,6 @@ def generate_json_files(
     output_dir: Path,
     notification_emails: list[str],
     logger: logging.Logger,
-    partition_name: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Generate JSON configuration files for each alert."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -685,13 +676,8 @@ def generate_json_files(
 
         # Skip alerts marked as unsupported
         if mapping.get("skip"):
-            logger.info(f"  Skipping unsupported alert: {name}")
-            continue
-
-        # Warn if disk partition alert but no partition name provided
-        metric_name_check = mapping.get("metric_name") or ""
-        if metric_name_check.startswith("DISK_PARTITION_") and not partition_name:
-            logger.warning(f"  Skipping '{name}': requires --partition-name (e.g., --partition-name sdd)")
+            reason = mapping.get("skip_reason", "marked as unsupported")
+            logger.info(f"  Skipping: {name} ({reason})")
             continue
 
         # Generate low priority alert if threshold exists
@@ -703,7 +689,6 @@ def generate_json_files(
                 "low",
                 mapping,
                 notification_emails,
-                partition_name=partition_name,
             )
 
             # Check for duplicate: same event_type, metric_name, and threshold/duration
@@ -744,7 +729,6 @@ def generate_json_files(
                 "high",
                 mapping,
                 notification_emails,
-                partition_name=partition_name,
             )
 
             # Check for duplicate
@@ -1036,11 +1020,6 @@ Environment variables (alternative to command line args):
         default="./logs",
         help="Directory for log files (default: ./logs)",
     )
-    parser.add_argument(
-        "--partition-name",
-        default=os.environ.get("OPS_MANAGER_PARTITION_NAME"),
-        help="Disk partition name for disk alerts (e.g., 'sdd', 'data'). Required for disk partition alerts.",
-    )
 
     args = parser.parse_args()
 
@@ -1148,7 +1127,6 @@ Environment variables (alternative to command line args):
         output_dir,
         args.notification_email,
         logger,
-        partition_name=args.partition_name,
     )
 
     if not generated_files:
