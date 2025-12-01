@@ -1,6 +1,7 @@
 # Configuration with credentials
 scripts/init.conf
 scripts/deploy_*.conf
+deploy_*.conf
 
 # Generated YAML files
 scripts/mdb_*.yaml
@@ -14,6 +15,7 @@ certs/*.key
 certs/*.crt
 certs/*.csr
 certs/*.srl
+certs/certs_*.yaml
 bin/certs/
 
 # Logs
