@@ -274,6 +274,7 @@ class OpsManagerClient:
         public_key: str,
         private_key: str,
         logger: logging.Logger,
+        verify_ssl: bool | str = True,
     ):
         self.base_url = base_url.rstrip("/")
         self.public_key = public_key
@@ -281,6 +282,7 @@ class OpsManagerClient:
         self.logger = logger
         self.session = requests.Session()
         self.session.auth = HTTPDigestAuth(public_key, private_key)
+        self.session.verify = verify_ssl
         self.session.headers.update({
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -529,12 +531,24 @@ def create_alert_config(
     mapping: dict[str, Any],
     notification_emails: list[str],
     notification_type: str = "GROUP",
+    partition_name: Optional[str] = None,
 ) -> dict[str, Any]:
     """Create an Ops Manager alert configuration JSON structure."""
+    matchers = []
+
+    # Add partition matcher for disk partition metrics
+    metric_name = mapping.get("metric_name") or ""
+    if metric_name.startswith("DISK_PARTITION_") and partition_name:
+        matchers.append({
+            "fieldName": "PARTITION_NAME",
+            "operator": "EQUALS",
+            "value": partition_name,
+        })
+
     config: dict[str, Any] = {
         "eventTypeName": mapping["event_type"],
         "enabled": True,
-        "matchers": [],
+        "matchers": matchers,
     }
 
     # Add typeName if specified (for backup/agent alerts)
@@ -650,6 +664,7 @@ def generate_json_files(
     output_dir: Path,
     notification_emails: list[str],
     logger: logging.Logger,
+    partition_name: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     """Generate JSON configuration files for each alert."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -673,6 +688,12 @@ def generate_json_files(
             logger.info(f"  Skipping unsupported alert: {name}")
             continue
 
+        # Warn if disk partition alert but no partition name provided
+        metric_name_check = mapping.get("metric_name") or ""
+        if metric_name_check.startswith("DISK_PARTITION_") and not partition_name:
+            logger.warning(f"  Skipping '{name}': requires --partition-name (e.g., --partition-name sdd)")
+            continue
+
         # Generate low priority alert if threshold exists
         if alert["low_threshold"] and str(alert["low_threshold"]).lower() not in ["none", ""]:
             threshold_info = parse_threshold(str(alert["low_threshold"]))
@@ -682,6 +703,7 @@ def generate_json_files(
                 "low",
                 mapping,
                 notification_emails,
+                partition_name=partition_name,
             )
 
             # Check for duplicate: same event_type, metric_name, and threshold/duration
@@ -722,6 +744,7 @@ def generate_json_files(
                 "high",
                 mapping,
                 notification_emails,
+                partition_name=partition_name,
             )
 
             # Check for duplicate
@@ -942,6 +965,8 @@ Environment variables (alternative to command line args):
   OPS_MANAGER_BASE_URL - Base URL for Ops Manager
   OPS_MANAGER_PUBLIC_KEY - API public key
   OPS_MANAGER_PRIVATE_KEY - API private key
+  OPS_MANAGER_CA_CERT - Path to CA certificate for SSL verification
+  OPS_MANAGER_PARTITION_NAME - Disk partition name for disk alerts
         """,
     )
 
@@ -959,6 +984,16 @@ Environment variables (alternative to command line args):
         "--private-key",
         default=os.environ.get("OPS_MANAGER_PRIVATE_KEY"),
         help="Ops Manager API private key",
+    )
+    parser.add_argument(
+        "--ca-cert",
+        default=os.environ.get("OPS_MANAGER_CA_CERT"),
+        help="Path to CA certificate file for SSL verification (for self-signed certs)",
+    )
+    parser.add_argument(
+        "--no-verify-ssl",
+        action="store_true",
+        help="Disable SSL certificate verification (not recommended for production)",
     )
     parser.add_argument(
         "--project-id",
@@ -1000,6 +1035,11 @@ Environment variables (alternative to command line args):
         "--log-dir",
         default="./logs",
         help="Directory for log files (default: ./logs)",
+    )
+    parser.add_argument(
+        "--partition-name",
+        default=os.environ.get("OPS_MANAGER_PARTITION_NAME"),
+        help="Disk partition name for disk alerts (e.g., 'sdd', 'data'). Required for disk partition alerts.",
     )
 
     args = parser.parse_args()
@@ -1046,11 +1086,22 @@ Environment variables (alternative to command line args):
         if not base_url.endswith("/api/public/v1.0"):
             base_url = base_url.rstrip("/") + "/api/public/v1.0"
 
+        # Determine SSL verification setting
+        if args.no_verify_ssl:
+            verify_ssl = False
+            logger.warning("SSL verification is disabled - not recommended for production!")
+        elif args.ca_cert:
+            verify_ssl = args.ca_cert
+            logger.info(f"Using CA certificate: {args.ca_cert}")
+        else:
+            verify_ssl = True
+
         client = OpsManagerClient(
             base_url=base_url,
             public_key=args.public_key,
             private_key=args.private_key,
             logger=logger,
+            verify_ssl=verify_ssl,
         )
 
         logger.info(f"Connecting to Ops Manager: {base_url}")
@@ -1097,6 +1148,7 @@ Environment variables (alternative to command line args):
         output_dir,
         args.notification_email,
         logger,
+        partition_name=args.partition_name,
     )
 
     if not generated_files:
