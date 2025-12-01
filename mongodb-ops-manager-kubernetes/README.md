@@ -274,15 +274,32 @@ bin/get_key.bash
 ### Connect to Clusters
 
 ```bash
-# External connection (from outside K8s)
-bin/connect_external.bash
+# List available clusters
+kubectl get mongodb -n mongodb
 
-# Pod-to-pod connection (from within K8s)
-bin/connect_from_pod.bash
+# Connect to ReplicaSet (external - from outside K8s)
+bin/connect_external.bash -n myproject1-myreplicaset
 
-# Get connection string
-bin/get_connection_string.bash -n myreplicaset
+# Connect to Sharded Cluster (connects to mongos)
+bin/connect_external.bash -n myproject2-mysharded
+
+# Get connection string only (without opening shell)
+bin/get_connection_string.bash -n myproject1-myreplicaset
+
+# Connect with LDAP authentication
+bin/connect_external.bash -n myproject1-myreplicaset -l
+
+# Connect from within K8s (pod-to-pod)
+bin/connect_from_pod.bash -n myproject1-myreplicaset
+
+# Get internal connection string
+bin/get_connection_string.bash -n myproject1-myreplicaset -i
 ```
+
+The connection scripts automatically:
+- Extract credentials from Kubernetes secrets
+- Download TLS certificates (CA + client cert) to `certs/`
+- Build the full connection string with TLS parameters
 
 ### Cleanup
 
