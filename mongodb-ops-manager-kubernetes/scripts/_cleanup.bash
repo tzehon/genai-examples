@@ -79,10 +79,10 @@ cleanup_k8s() {
 cleanup_files() {
     echo "=== Cleaning up local generated files ==="
 
-    # Generated certificates
-    if ls certs/certs_*.yaml 1> /dev/null 2>&1; then
+    # Generated certificates (certs dir is sibling to scripts)
+    if ls ../certs/certs_*.yaml 1> /dev/null 2>&1; then
         echo "Removing generated certificate files..."
-        rm -f certs/certs_*.yaml
+        rm -f ../certs/certs_*.yaml
     fi
 
     # Generated manifests
@@ -92,13 +92,13 @@ cleanup_files() {
     rm -f mdbuser_*.yaml
 
     # Bin directory copy of init.conf
-    rm -f bin/init.conf
+    rm -f ../bin/init.conf
 
     # Old deploy configs (keep only today's if exists)
     today=$(date "+%F")
     echo "Removing old deploy config files (keeping today's: deploy_${today}.conf)..."
-    for f in deploy_*.conf; do
-        if [[ -f "$f" && "$f" != "deploy_${today}.conf" ]]; then
+    for f in deploy_*.conf ../deploy_*.conf; do
+        if [[ -f "$f" && "$f" != "deploy_${today}.conf" && "$f" != "../deploy_${today}.conf" ]]; then
             echo "  Removing: $f"
             rm -f "$f"
         fi
