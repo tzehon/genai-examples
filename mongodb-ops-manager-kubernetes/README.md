@@ -223,11 +223,17 @@ To use a custom CA:
 ./deploy_Cluster.bash -n myreplicaset -e horizon
 ```
 
-**LoadBalancer/NodePort (Sharded)**
+**LoadBalancer (Sharded)**
 ```bash
-# Exposes mongos via LoadBalancer
-./deploy_Cluster.bash -n mysharded -s 2 -r 2 -e mongos
+# Exposes mongos via LoadBalancer with automatic TLS cert update
+./deploy_Cluster.bash -n mysharded -s 2 -r 2
 ```
+
+The deployment script automatically:
+- Creates LoadBalancer services for each mongos
+- Waits for external IPs to be assigned
+- Regenerates mongos TLS certificates with external DNS names
+- Enables external connections without manual certificate steps
 
 ### LDAP Integration
 

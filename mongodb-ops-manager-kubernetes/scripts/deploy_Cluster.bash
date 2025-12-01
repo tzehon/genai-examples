@@ -352,6 +352,38 @@ done
 
 sleep 5
 printf "\n"
+
+# For sharded clusters with external access, regenerate mongos certs with external DNS
+if [[ ${sharded} == true && ${tls} == true && ${makeCerts} == true ]]
+then
+    printf "%s\n" "Regenerating mongos certificates with external DNS names..."
+    # Wait for mongos services to get external IPs
+    for i in $(seq 0 $((mongos-1))); do
+        svc_name="${fullName}-mongos-${i}-svc-external"
+        n=0
+        max=30
+        while [ $n -lt $max ]; do
+            ip=$(kubectl -n ${namespace} get svc/${svc_name} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+            [[ -n "$ip" ]] && break
+            sleep 5
+            n=$((n+1))
+        done
+    done
+    # Get external DNS names for all mongos
+    ext_dns=()
+    for i in $(seq 0 $((mongos-1))); do
+        svc_name="${fullName}-mongos-${i}-svc-external"
+        hn=$(../bin/get_hns.bash -s "${svc_name}" 2>/dev/null | tr -d '[:space:]' | cut -d: -f1)
+        [[ -n "$hn" ]] && ext_dns+=("$hn")
+    done
+    if [[ ${#ext_dns[@]} -gt 0 ]]; then
+        printf "%s\n" "External DNS names: ${ext_dns[*]}"
+        "${PWD}/../certs/make_sharded_certs.bash" "${fullName}" mongos -cert "${ext_dns[@]}"
+        kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-mongos-cert.yaml"
+        printf "%s\n" "Mongos certificates updated with external DNS names."
+    fi
+fi
+
 cs=$( ../bin/get_connection_string.bash -n "${fullName}" )
 if [[ "$cs" == *external* ]]
 then
