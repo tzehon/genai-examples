@@ -125,10 +125,20 @@ then
     then
         np0=$( kubectl -n ${namespace} get svc/${serviceName} -o jsonpath='{.spec.ports[0].port}' )
         slist=( $( kubectl -n ${namespace} get svc/${serviceName} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' ) )
-        if [[ ${#slist[@]} == 0 ]]
+        if [[ ${#slist[@]} == 0 || -z "${slist[0]}" ]]
         then
-            # Use IP directly - don't try nslookup which can return internal K8s DNS names
-            slist=( $(kubectl -n ${namespace} get svc/${serviceName} -o jsonpath='{.status.loadBalancer.ingress[*].ip }' ) )
+            # No hostname, try IP with reverse DNS lookup
+            ip=$( kubectl -n ${namespace} get svc/${serviceName} -o jsonpath='{.status.loadBalancer.ingress[0].ip}' )
+            if [[ -n "$ip" ]]
+            then
+                # Use external DNS (8.8.8.8) for PTR lookup - avoids K8s CoreDNS returning internal names
+                hn=$( nslookup $ip 8.8.8.8 2>/dev/null | grep 'name = ' | awk '{print $NF}' | sed 's/\.$//' )
+                if [[ -n "$hn" ]]; then
+                    slist=( "$hn" )
+                else
+                    slist=( "$ip" )
+                fi
+            fi
         fi
     else
         # ReplicaSet: query each service individually in order to ensure correct mapping
