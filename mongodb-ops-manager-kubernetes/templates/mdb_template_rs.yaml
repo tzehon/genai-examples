@@ -16,48 +16,8 @@ spec:
   credentials: NAMESPACE-OPSMANAGER-admin-key
   persistent: true
   duplicateServiceObjects: DUPSERVICE
-  #MULTI clusterSpecList:
-  #MULTI   - clusterName: MDB_CLUSTER_0_CONTEXT
-  #MULTI     members: 2
-  #MULTI     #MCEXPOSE externalAccess:
-  #MULTI     #MCEXPOSE   #EXTDOMAIN externalDomain: CLUSTER0.EXTDOMAINNAME
-  #MULTI     #MCEXPOSE   externalService:
-  #MULTI     #MCEXPOSE   #  annotations:
-  #MULTI     #MCEXPOSE   #    "cloud.google.com/l4-rbs": "enabled"
-  #MULTI   - clusterName: MDB_CLUSTER_1_CONTEXT
-  #MULTI     members: 2
-  #MULTI     #MCEXPOSE externalAccess:
-  #MULTI     #MCEXPOSE   #EXTDOMAIN externalDomain: CLUSTER1.EXTDOMAINNAME
-  #MULTI     #MCEXPOSE   externalService:
-  #MULTI     #MCEXPOSE   #  annotations:
-  #MULTI     #MCEXPOSE   #    "cloud.google.com/l4-rbs": "enabled"
-  #MULTI   - clusterName: MDB_CLUSTER_2_CONTEXT
-  #MULTI     members: 1
-  #MULTI     #MCEXPOSE externalAccess:
-  #MULTI     #MCEXPOSE   #EXTDOMAIN externalDomain: CLUSTER2.EXTDOMAINNAME
-  #MULTI     #MCEXPOSE   externalService:
-  #MULTI     #MCEXPOSE   #  annotations:
-  #MULTI     #MCEXPOSE   #    "cloud.google.com/l4-rbs": "enabled"
-  #MULTI statefulSet:
-  #MULTI   spec:
-  #MULTI     template:
-  #MULTI       spec:
-  #MULTI         containers:
-  #MULTI         - name: mongodb-enterprise-database
-  #MULTI           resources:
-  #MULTI             limits:
-  #MULTI               cpu: "RSCPU"
-  #MULTI               memory: RSMEM 
-  #MULTI     volumeClaimTemplates:
-  #MULTI     - metadata:
-  #MULTI         name: data
-  #MULTI       spec:
-  #MULTI         resources:
-  #MULTI           requests:
-  #MULTI             storage: RSDISK # 2Gi
   podSpec:
-    # `podTemplate` allows to set custom fields in PodTemplateSpec for the
-    # Used for non-MultiCluster Mongodb Pods.
+    # `podTemplate` allows to set custom fields in PodTemplateSpec
     # For more information see:
     # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#podtemplatespec-v1-core
     podTemplate:

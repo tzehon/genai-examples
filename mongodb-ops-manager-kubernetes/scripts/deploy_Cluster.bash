@@ -1,6 +1,7 @@
-#/bin/bash
+#!/bin/bash
 
-d=$( dirname "$0" )
+# Resolve to absolute path so script works when called from PATH
+d=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${d}"
 source init.conf
 
@@ -17,7 +18,7 @@ do
     k) kmip=true ;;
     o) orgName="$OPTARG";;
     p) projectName="$OPTARG";;
-    g) makeCerts=false ;; 
+    g) makeCerts=false ;;
     x) x=true ;; # cleanup
     s) shards="$OPTARG" ;;
     r) mongos="$OPTARG" ;;
@@ -40,8 +41,8 @@ then
     shards="${shards:-2}"
     mongos="${mongos:-1}"
     name="${name:-mysharded}"
-    template="mdb_template_sh.yaml"
-    # mongos and configServer resources (good for a demo) 
+    template="../templates/mdb_template_sh.yaml"
+    # mongos and configServer resources (good for a demo)
     msmem="2Gi"
     mscpu="0.5"
     csmem="2Gi"
@@ -50,7 +51,7 @@ else
     sharded=false
     name="${name:-myreplicset}"
     template="${name:-myreplicaset}"
-    template="mdb_template_rs.yaml"
+    template="../templates/mdb_template_rs.yaml"
 fi
 
 ver="${ver:-$mdbVersion}"
@@ -62,13 +63,14 @@ cleanup=${x:-false}
 projectName="${projectName:-$name}"
 if [[ ${orgName} != "" ]]
 then
-    orgInfo=( $( get_org.bash -o ${orgName} ) )
+    orgInfo=( $( ../bin/get_org.bash -o ${orgName} ) )
     orgId=${orgInfo[1]}
 fi
 fullName=$( printf "${projectName}-${name}"| tr '[:upper:]' '[:lower:]' )
 makeCerts=${makeCerts:-true}
 [[ ${demo} ]] && serviceType="NodePort" clusterDomain="cluster.local"
 duplicateServiceObjects=false
+mdbKind="MongoDB"
 
 # make manifest from template
 mdb="mdb_${fullName}.yaml"
@@ -115,59 +117,16 @@ then
     ldapString=""
 fi
 
-# multi-Cluster
-unset multiCluster 
-[[ $0 == *multi* ]] && export multiCluster=true 
-multiClusterString="#MULTI "
-mdbKind="MongoDB"
-if [[ ${multiCluster} == true ]]
-then
-  multiClusterString=""
-  clusterDomain="${multiClusterDomain}"
-  mdbKind="MongoDBMultiCluster"
-  multiClusterOption="-m"
-  duplicateServiceObjects=true
-  # recreate configmap and secret for OM in mcNamespace
-  if [[ ${namespace} != ${mcNamespace} ]]
-  then
-  kubectl -n ${mcNamespace} get configmap ${omName}-ca  >/dev/null 2>&1
-  if [[ $? != 0 ]] 
-  then
-    kubectl -n ${namespace} get configmap ${omName}-ca -o yaml \
-    | sed "s|namespace: ${namespace}|namespace: ${mcNamespace}|" \
-    | kubectl -n ${mcNamespace} apply -f -
-  fi
-
-  kubectl -n ${mcNamespace} get secret ${mcNamespace}-${omName}-admin-key >/dev/null 2>&1
-  if [[ $? != 0 ]]
-  then
-    eval publicKey=$(  kubectl -n ${namespace} get secret ${namespace}-${omName}-admin-key -o jsonpath='{.data.publicKey}' | base64 -d )
-    eval privateKey=$( kubectl -n ${namespace} get secret ${namespace}-${omName}-admin-key -o jsonpath='{.data.privateKey}' | base64 -d )
-    kubectl -n ${mcNamespace} create secret generic ${mcNamespace}-${omName}-admin-key \
-      --from-literal="publicKey=${publicKey}" \
-      --from-literal="privateKey=${privateKey}"
-  fi
-  fi # diff namespace
-  namespace=${mcNamespace}
-fi # multicluster
-
 # expose services
-mcexposeString="#MCEXPOSE "
 exposeString="#EXPOSE "
 extdomainString="#EXTDOMAIN "
 # externalDomain is a per MDB Cluster parameter
 unset externalDomain
-if [[ ${expose} ]] 
-then 
+if [[ ${expose} ]]
+then
   exposeString=""
-  if [[ ${multiCluster} == true ]]
+  if [[ ${expose} != "horizon" ]]
   then
-    exposeString="#EXPOSE "
-    mcexposeString="" 
-    duplicateServiceObjects=true
-  fi
-  if [[ ${expose} != "horizon" ]] 
-  then 
     exposeString=""
     export externalDomain="${expose}"
     extdomainString=""
@@ -178,12 +137,8 @@ fi
 cat ${template} | sed \
   -e "s|MDBKIND|$mdbKind|" \
   -e "s|#EXPOSE |$exposeString|" \
-  -e "s|#MCEXPOSE |$mcexposeString|" \
   -e "s|EXTDOMAINNAME|$externalDomain|" \
   -e "s|#EXTDOMAIN |$extdomainString|" \
-  -e "s|CLUSTER0|$MDB_CLUSTER_0|" \
-  -e "s|CLUSTER1|$MDB_CLUSTER_1|" \
-  -e "s|CLUSTER2|$MDB_CLUSTER_2|" \
   -e "s|DOMAINNAME|$clusterDomain|" \
   -e "s|DUPSERVICE|$duplicateServiceObjects|" \
   -e "s|$tlsc|$tlsr|" \
@@ -217,19 +172,15 @@ cat ${template} | sed \
   -e "s|LDAPSERVER|$ldapServer|" \
   -e "s|LDAPCERTMAPNAME|$ldapCertMapName|" \
   -e "s|LDAPKEY|$ldapKey|" \
-  -e "s|#MULTI |$multiClusterString|" \
-  -e "s|MDB_CLUSTER_0_CONTEXT|$MDB_CLUSTER_0_CONTEXT|" \
-  -e "s|MDB_CLUSTER_1_CONTEXT|$MDB_CLUSTER_1_CONTEXT|" \
-  -e "s|MDB_CLUSTER_2_CONTEXT|$MDB_CLUSTER_2_CONTEXT|" \
   -e "s|PROJECT-NAME|$fullName|" > "$mdb"
 
-cat mdbuser_template_admin.yaml | sed \
+cat ../templates/mdbuser_template_admin.yaml | sed \
     -e "s|NAME|${fullName}|" \
     -e "s|USER|${dbuser}|" > "$mdbuser1"
 
 if [[ ${ldap} == 'ldap' || ${ldap} == 'ldaps' ]]
 then
-  cat mdbuser_template_ldap.yaml | sed \
+  cat ../templates/mdbuser_template_ldap.yaml | sed \
       -e "s|NAME|${fullName}|" \
       -e "s|USER|${ldapUser}|" > "$mdbuser2"
 fi
@@ -242,12 +193,6 @@ then
   for type in sts pods svc secrets configmaps pvc mdbu
   do
     kubectl -n ${namespace} delete $( kubectl -n ${namespace} get $type -o name | grep "${fullName}" ) --now > /dev/null 2>&1
-    if [[ ${multiCluster} == true ]]
-    then
-      kubectl -n ${namespace} --context=$MDB_CLUSTER_0_CONTEXT -n $namespace delete $( kubectl -n ${namespace} --context=$MDB_CLUSTER_0_CONTEXT -n $namespace get $type -o name | grep "${fullName}" ) --now > /dev/null 2>&1 
-      kubectl -n ${namespace} --context=$MDB_CLUSTER_1_CONTEXT -n $namespace delete $( kubectl -n ${namespace} --context=$MDB_CLUSTER_1_CONTEXT -n $namespace get $type -o name | grep "${fullName}" ) --now > /dev/null 2>&1 
-      kubectl -n ${namespace} --context=$MDB_CLUSTER_2_CONTEXT -n $namespace delete $( kubectl -n ${namespace} --context=$MDB_CLUSTER_2_CONTEXT -n $namespace get $type -o name | grep "${fullName}" ) --now > /dev/null 2>&1 
-    fi
   done
   if [[ ${tls} == true ]]
   then
@@ -256,14 +201,14 @@ then
     kubectl -n ${namespace} delete $( kubectl -n ${namespace} get $type -o name | grep "${fullName}" ) --now > /dev/null 2>&1
   done
   fi
-  delete_project.bash -p ${projectName} 
+  ../bin/delete_project.bash -p ${projectName}
   printf "... Done.\n"
   exit
 fi
 
 # Create map for OM Org/Project
 printf "Using Ops Manager at: ${opsMgrUrl} \n"
-printf "%s\n" "Deploying cluster: ${fullName}, version: ${mdbVersion}, cores: ${cpu}, memory: ${mem}, disk: ${dsk}" 
+printf "%s\n" "Deploying cluster: ${fullName}, version: ${mdbVersion}, cores: ${cpu}, memory: ${mem}, disk: ${dsk}"
 [[ ${shards} ]] && printf "%s\n" "    shards: ${shards}, mongos: ${mongos}"
 printf "%s\n" "    in org: ${deploymentOrgName}, project: ${projectName} with: expose: ${expose}, LDAP: ${ldapType}"
 printf "\n"
@@ -281,12 +226,12 @@ then
   if [[ ${sharded} == true ]]
   then
     if [[ ${makeCerts} == true ]]
-    then 
+    then
       # mdb-{metadata.name}-mongos-cert
       # mdb-{metadata.name}-config-cert
       # mdb-{metadata.name}-<x>-cert x=0,1 (2 shards)
       for ctype in agent mongos config $( seq -s " " 0 $(( $shards-1)) )
-      do   
+      do
       # Create a secret for the member certs for TLS
       cert="-cert"
       [[ "${ctype}" == "agent" ]] && cert="-certs"
@@ -294,7 +239,7 @@ then
       kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-${ctype}${cert}.yaml"
       done
     fi
-  else 
+  else
     # ReplicaSet
     # create new certs if the service does not exist
     if [[ ${makeCerts} == true ]]
@@ -321,7 +266,7 @@ else
 fi # tls
 
 # create secrets and config map for KMIP server
-if [[ ${kmip} == true ]] 
+if [[ ${kmip} == true ]]
 then
     kubectl -n ${namespace} delete configmap ${fullName}-kmip-ca-pem >/dev/null 2>&1
     kubectl -n ${namespace} create configmap ${fullName}-kmip-ca-pem --from-file="ca.pem=certs/kmip_ca.pem"
@@ -345,44 +290,32 @@ then
   kubectl -n ${namespace} apply -f "${mdbuser2}"
   kubectl -n ${namespace} delete secret "${fullName}-ldapsecret" > /dev/null 2>&1
   kubectl -n ${namespace} create secret generic "${fullName}-ldapsecret" \
-    --from-literal=password="${ldapBindQueryPassword}" 2> /dev/null 
+    --from-literal=password="${ldapBindQueryPassword}" 2> /dev/null
 fi
 
 # Create the DB Resource
 kubectl -n ${namespace} apply -f "${mdb}"
 # for SplitHorizons - append horizons and reissue certs with horizons
 sleep 3
-if [[ ${expose} && ${sharded} == false ]] 
+if [[ ${expose} && ${sharded} == false ]]
 then
   printf "%s\n" "Generating ${serviceType} Service ports ..."
-  serviceOut=$( expose_service.bash -n "${fullName}" -g ${makeCerts} ${multiClusterOption} ) 
+  serviceOut=$( ../bin/expose_service.bash -n "${fullName}" -g ${makeCerts} )
   if [[ $? != 0 ]]
-  then 
+  then
     printf "* * * Error - Failed to get services.\n"
     exit 1
   fi
-  nlines=5
-  [[ ${multiCluster} ]] && nlines=9
-  printf "${serviceOut}\n"| head -n ${nlines}
+  printf "${serviceOut}\n"| head -n 5
   if [[ ${externalDomain} ]]
   then
     printf "\nMake sure external DNS is configured for your replicaSet\n"
     printf "  - Match repSet names to the service External-IP\n"
-    if [[ ! ${multiCluster} || ${multiCluster} == false ]] 
-    then
-      printf "  - The repSet names are : ${fullName}-[012].${externalDomain}\n"
-      update_dns.bash -n "${fullName}"
-    else
-    #if [[ ${multiCluster} == true ]]
-    #then
-      printf "  - The repSet names are in the form: ${fullName}-0-[012].${MDB_CLUSTER_0}.${externalDomain}\n"
-      printf "  - The repSet names are in the form: ${fullName}-1-[012].${MDB_CLUSTER_1}.${externalDomain}\n"
-      printf "  - The repSet names are in the form: ${fullName}-2-[012].${MDB_CLUSTER_2}.${externalDomain}\n"
-      update_mc_dns.bash -n "${fullName}"
-    fi
+    printf "  - The repSet names are : ${fullName}-[012].${externalDomain}\n"
+    ../bin/update_dns.bash -n "${fullName}"
   else
     kubectl -n ${namespace} apply -f "${mdb}" # re-apply for splitHorizon addition
-    printf "\nAdded this configuration to the manifest ${mdb}:\n" 
+    printf "\nAdded this configuration to the manifest ${mdb}:\n"
     eval tail -n 5 "${mdb}"
   fi
   printf "... Done.\n"
@@ -408,12 +341,6 @@ do
     pstatus=$( kubectl -n ${namespace} get "${resource}" -o jsonpath={'.status.phase'} )
     message=$( kubectl -n ${namespace} get "${resource}" -o jsonpath={'.status.message'} )
     printf "%s\n" "status.message: $message"
-    # if [[ "${message:0:39}" == "${notapproved}" ||  "${message:0:11}" == "${certificate}" ]]
-    # then
-    #     # TLS Cert approval (if using autogenerated certs -- deprecated)
-    #     kubectl -n ${namespace} certificate approve $( kubectl -n ${namespace} get csr | grep "Pending" | awk '{print $1}' )
-    # fi
-    #if [[ "$pstatus" == "Pending" || "$pstatus" == "Running" ]];
     if [[ "$pstatus" == "Running" ]];
     then
         printf "Status: %s\n" "$pstatus"
@@ -425,14 +352,14 @@ done
 
 sleep 5
 printf "\n"
-cs=$( get_connection_string.bash -n "${fullName}" ${multiClusterOption} )
+cs=$( ../bin/get_connection_string.bash -n "${fullName}" )
 if [[ "$cs" == *external* ]]
 then
     printf "\n%s\n\n" "$cs"
-    printf "%s\n" "To see if access is working, connect directly by running: connect_external.bash -n \"${fullName}\" ${multiClusterOption}"
-    printf "%s\n" "                      or connect from the pod by running: connect_from_pod.bash -n \"${fullName}\" ${multiClusterOption}"
+    printf "%s\n" "To see if access is working, connect directly by running: connect_external.bash -n \"${fullName}\""
+    printf "%s\n" "                      or connect from the pod by running: connect_from_pod.bash -n \"${fullName}\""
 else
     printf "\n%s\n\n" "$cs"
-    printf "%s\n" "To see if access is working, connect from the pod by running: connect_from_pod.bash -n \"${fullName}\" ${multiClusterOption}"
+    printf "%s\n" "To see if access is working, connect from the pod by running: connect_from_pod.bash -n \"${fullName}\""
 fi
 exit 0
