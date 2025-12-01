@@ -23,8 +23,8 @@ then
     kubectl get secret/"${cert}" > /dev/null 2>&1
     [[ $? == 0 ]] && break
     done
-    kubectl get secret "${cert}" -o jsonpath="{.data.tls\.crt}"|base64 -d > "${cert}.crt"
-    kubectl get secret "${cert}" -o jsonpath="{.data.tls\.key}"|base64 -d > "${cert}.key"
+    kubectl get secret "${cert}" -o jsonpath="{.data.tls\.crt}"|base64 --decode > "${cert}.crt"
+    kubectl get secret "${cert}" -o jsonpath="{.data.tls\.key}"|base64 --decode > "${cert}.key"
     cat "${cert}.key" "${cert}.crt" ca.key ca.crt > queryable-backup.pem
     rm "${cert}.key" "${cert}.crt" 
     [[ -e "queryable-backup.pem" ]] && printf "%s\n" "Made queryable-backup.pem" 
@@ -40,8 +40,8 @@ kubectl apply -f "$PWD/certs_${cert}.yaml"
     kubectl get secret/"${cert}" > /dev/null 2>&1
     [[ $? == 0 ]] && break
     done
-kubectl get secret "${cert}" -o jsonpath="{.data.tls\.crt}"|base64 -d > "${cert}.crt"
-kubectl get secret "${cert}" -o jsonpath="{.data.tls\.key}"|base64 -d > "${cert}.key"
+kubectl get secret "${cert}" -o jsonpath="{.data.tls\.crt}"|base64 --decode > "${cert}.crt"
+kubectl get secret "${cert}" -o jsonpath="{.data.tls\.key}"|base64 --decode > "${cert}.key"
 cat "${cert}.key" "${cert}.crt" > "${cert}.pem"
 [[ -e "${cert}.pem" ]] && printf "%s\n" "Made ${cert}.pem"
 
