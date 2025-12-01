@@ -58,8 +58,18 @@ then
 
 if [[ ${sharded} == 1 ]]
 then
-    hn=( $( get_hns.bash -s "${name}${mongos}-0-svc-external" ) )
-    ecs=$( printf "%s" "$ics" | sed -e "s?:2701.?:${hn#*:}?g" )
+    # Get external hostnames for each mongos instance
+    mongos_hosts=()
+    for svc in $(kubectl $ns get svc -o name | grep "${name}-mongos-.*-svc-external"); do
+        svc_name=${svc#service/}
+        ext_host=$( get_hns.bash -s "${svc_name}" | tr -d '[:space:]' )
+        [[ -n "$ext_host" ]] && mongos_hosts+=("$ext_host")
+    done
+    if [[ ${#mongos_hosts[@]} -gt 0 ]]; then
+        # Replace hostnames between @ and /? with external hosts
+        ext_hosts_str=$(IFS=,; echo "${mongos_hosts[*]}")
+        ecs=$( printf "%s" "$ics" | sed -e "s?@[^/]*/?@${ext_hosts_str}/?" )
+    fi
 elif [[ ${externalDomain} == "null" ]]
 then
     hn=( $( get_hns.bash -n "${name}" ) )
