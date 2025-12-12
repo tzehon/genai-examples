@@ -1,14 +1,85 @@
 import streamlit as st
 import anthropic
 import pymongo
-import tempfile
-from typing import Any, Dict, List, Optional, Union
+import base64
+from typing import Any, Dict
 import json
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
-import fitz  # PyMuPDF
 from bson import ObjectId
 from merchant_classifier import MultilingualMerchantClassifier
+
+
+# Tool definitions for Claude structured outputs
+INVOICE_EXTRACTION_TOOL = {
+    "name": "extract_invoice_metadata",
+    "description": "Extract structured metadata from an invoice or receipt document",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "merchant_name": {
+                "type": "string",
+                "description": "The business or merchant name"
+            },
+            "date": {
+                "type": "string",
+                "description": "The transaction or document date in ISO 8601 format (YYYY-MM-DD)"
+            },
+            "total_amount": {
+                "type": "number",
+                "description": "The total amount of the transaction"
+            },
+            "currency": {
+                "type": "string",
+                "description": "The currency code (e.g., USD, SGD, EUR)"
+            },
+            "category": {
+                "type": "string",
+                "enum": ["receipt", "invoice", "statement", "bill", "other"],
+                "description": "The type of document"
+            },
+            "payment_method": {
+                "type": "string",
+                "description": "The payment method if mentioned (e.g., credit_card, cash, debit)"
+            },
+            "items": {
+                "type": "array",
+                "description": "Array of items/services mentioned with prices",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": {"type": "string"},
+                        "quantity": {"type": "number"},
+                        "unit_price": {"type": "number"},
+                        "total": {"type": "number"}
+                    },
+                    "required": ["description"]
+                }
+            }
+        },
+        "required": ["merchant_name", "total_amount", "currency"]
+    }
+}
+
+MONGODB_PIPELINE_TOOL = {
+    "name": "generate_mongodb_pipeline",
+    "description": "Generate a MongoDB aggregation pipeline from a natural language query",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "pipeline": {
+                "type": "array",
+                "description": "MongoDB aggregation pipeline stages",
+                "items": {"type": "object"}
+            },
+            "explanation": {
+                "type": "string",
+                "description": "Brief explanation of what the pipeline does"
+            }
+        },
+        "required": ["pipeline"]
+    }
+}
 
 
 class PipelineValidationError(Exception):
@@ -105,183 +176,111 @@ def init_connections():
 
     return db, claude, merchant_classifier
 
-def extract_text_from_pdf(pdf_file) -> str:
-    """Extract text from uploaded PDF file."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        tmp_file.write(pdf_file.getvalue())
-        tmp_file.seek(0)
-
-        doc = fitz.open(tmp_file.name)
-        text = ""
-        for page in doc:
-            text += page.get_text()
-        return text
-
 def extract_metadata_with_claude(
     claude: anthropic.Client,
-    text: str
+    pdf_bytes: bytes
 ) -> Dict[str, Any]:
-    """Extract metadata from text using Claude."""
-    prompt = f"""Extract the following metadata from this document text. Return as JSON:
-    - merchant_name: The business or merchant name
-    - date: The transaction or document date
-    - total_amount: Any total amount mentioned
-    - category: The type of document (receipt, invoice, statement, etc.)
-    - currency: The currency used
-    - payment_method: The payment method if mentioned
-    - items: Array of items/services mentioned with prices if available
-
-    Document text:
-    {text[:2000]}  # Limiting text length for prompt
-
-    Return only the JSON without any explanation.
     """
+    Extract metadata from PDF using Claude's vision capability and structured outputs.
+
+    Uses PDF vision to preserve document layout (tables, formatting) and tool use
+    for guaranteed valid JSON output matching the schema.
+    """
+    # Encode PDF as base64 for vision API
+    pdf_base64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
 
     message = claude.messages.create(
         model="claude-sonnet-4-5-20250929",
-        max_tokens=1000,
-        temperature=0,
+        max_tokens=1024,
+        tools=[INVOICE_EXTRACTION_TOOL],
+        tool_choice={"type": "tool", "name": "extract_invoice_metadata"},
         messages=[
             {
                 "role": "user",
-                "content": prompt
+                "content": [
+                    {
+                        "type": "document",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "application/pdf",
+                            "data": pdf_base64
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Extract all invoice/receipt metadata from this document. Include merchant name, date, amounts, items, and payment details."
+                    }
+                ]
             }
         ]
     )
 
-    # Get the response and clean it before parsing
-    response = message.content[0].text.strip()
+    # With tool_choice forcing the tool, the response is guaranteed to be
+    # valid JSON matching our schema - no parsing/cleanup needed
+    for block in message.content:
+        if block.type == "tool_use":
+            return block.input
 
-    # Remove markdown code blocks if present
-    if response.startswith('```json'):
-        response = response.split('```json')[1]
-    if response.startswith('```'):
-        response = response.split('```')[1]
-    if response.endswith('```'):
-        response = response.rsplit('```', 1)[0]
-    response = response.strip()
-
-    try:
-        return json.loads(response)
-    except json.JSONDecodeError as e:
-        # Print the response for debugging
-        print(f"Failed to parse JSON. Response was: {response}")
-        raise ValueError(f"Claude returned invalid JSON: {e}") from e
+    raise ValueError("Claude did not return tool use response")
 
 def process_natural_language_query(
     claude: anthropic.Client,
     query: str
-) -> str:
-    """Convert natural language query to MongoDB query using Claude."""
-    prompt = f"""Convert this natural language query into a MongoDB aggregation pipeline:
-    "{query}"
+) -> dict:
+    """
+    Convert natural language query to MongoDB aggregation pipeline using structured outputs.
 
-    CRITICAL: When a merchant name is mentioned in the query, use the EXACT merchant name as it appears in the query.
-    For example:
-    - "Grab Singapore" should search for exactly "Grab Singapore" (not just "Grab")
-    - "McDonald's" should search for exactly "McDonald's"
-    - Extract the full merchant name from the query and use it verbatim
+    Returns a dict with 'pipeline' (list) and optional 'explanation' (str).
+    """
+    system_prompt = """You are a MongoDB query generator. Convert natural language queries into MongoDB aggregation pipelines.
 
-    The database has two collections:
+CRITICAL: When a merchant name is mentioned in the query, use the EXACT merchant name as it appears.
 
-    documents collection:
-    - merchant_id (ObjectId reference to merchants collection)
-    - merchant_name (string)
-    - total_amount (number)
-    - date (string/date)
-    - category (string)
-    - currency (string)
-    - payment_method (string)
-    - items (array)
+The database has two collections:
 
-    merchants collection:
-    - _id (ObjectId)
-    - canonical_name (string, e.g., "Grab Singapore", "M1 Limited")
-    - synonyms (array of strings)
+documents collection:
+- merchant_id (ObjectId reference to merchants collection)
+- merchant_name (string)
+- total_amount (number)
+- date (string/date)
+- category (string)
+- currency (string)
+- payment_method (string)
+- items (array)
 
-    Here's the exact format to use (example with MERCHANT_NAME as placeholder):
-    [
-      {{
-        "$lookup": {{
-          "from": "merchants",
-          "let": {{
-            "merchant_id": "$merchant_id"
-          }},
-          "pipeline": [
-            {{
-              "$match": {{
-                "$expr": {{
-                  "$and": [
-                    {{ "$eq": ["$_id", "$$merchant_id"] }},
-                    {{
-                      "$or": [
-                        {{ "$eq": ["$canonical_name", "MERCHANT_NAME"] }},
-                        {{ "$in": ["MERCHANT_NAME", "$synonyms"] }}
-                      ]
-                    }}
-                  ]
-                }}
-              }}
-            }}
-          ],
-          "as": "merchant_details"
-        }}
-      }},
-      {{
-        "$match": {{
-          "merchant_details": {{ "$ne": [] }}
-        }}
-      }},
-      {{
-        "$group": {{
-          "_id": null,
-          "total_spend": {{ "$sum": "$total_amount" }}
-        }}
-      }}
-    ]
+merchants collection:
+- _id (ObjectId)
+- canonical_name (string, e.g., "Grab Singapore", "M1 Limited")
+- synonyms (array of strings)
 
-    Important:
-    1. Use EXACT merchant name from the query - do not abbreviate or modify it
-    2. Use exact operator syntax: "$eq", "$ne", "$in", etc.
-    3. Always use proper JSON formatting
-    4. For string comparison use exact match, not regex
-    5. The $lookup must use let/expr pattern as shown above
+For merchant queries, use $lookup with let/expr pattern to match by canonical_name or synonyms.
 
-    Return only the valid JSON array for the MongoDB aggregation pipeline. No explanation.
-    Format dates using ISODate() where needed."""
+Important:
+1. Use EXACT merchant name from the query - do not abbreviate or modify it
+2. Use exact operator syntax: "$eq", "$ne", "$in", etc.
+3. For string comparison use exact match, not regex
+4. The $lookup must use let/expr pattern for merchant matching"""
 
     message = claude.messages.create(
         model="claude-sonnet-4-5-20250929",
-        max_tokens=1000,
-        temperature=0,
+        max_tokens=1024,
+        system=system_prompt,
+        tools=[MONGODB_PIPELINE_TOOL],
+        tool_choice={"type": "tool", "name": "generate_mongodb_pipeline"},
         messages=[
             {
                 "role": "user",
-                "content": prompt
+                "content": f"Convert this query to a MongoDB aggregation pipeline: {query}"
             }
         ]
     )
 
-    # Get the response and ensure it's valid JSON
-    response = message.content[0].text.strip()
+    # With tool_choice forcing the tool, response is guaranteed valid JSON
+    for block in message.content:
+        if block.type == "tool_use":
+            return block.input
 
-    # Remove markdown code blocks if present
-    if response.startswith('```json'):
-        response = response.split('```json')[1]
-    if response.startswith('```'):
-        response = response.split('```')[1]
-    if response.endswith('```'):
-        response = response.rsplit('```', 1)[0]
-    response = response.strip()
-
-    # Add error handling for debugging
-    try:
-        # Validate it's valid JSON before returning
-        json.loads(response)
-        return response
-    except json.JSONDecodeError as e:
-        print(f"Failed to parse MongoDB query. Response was: {response}")
-        raise ValueError(f"Claude returned invalid JSON: {e}") from e
+    raise ValueError("Claude did not return tool use response")
 
 def main():
     st.title("Receipt Processor")
@@ -298,12 +297,12 @@ def main():
         uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
         if uploaded_file:
-            # Extract text from PDF
-            text = extract_text_from_pdf(uploaded_file)
+            # Get PDF bytes for vision API
+            pdf_bytes = uploaded_file.getvalue()
 
-            # Extract metadata using Claude
-            with st.spinner("Extracting metadata..."):
-                metadata = extract_metadata_with_claude(claude, text)
+            # Extract metadata using Claude vision + structured outputs
+            with st.spinner("Extracting metadata with Claude Vision..."):
+                metadata = extract_metadata_with_claude(claude, pdf_bytes)
 
                 # Classify merchant
                 if "merchant_name" in metadata:
@@ -329,8 +328,7 @@ def main():
             doc = {
                 **metadata,
                 "processed_date": datetime.utcnow(),
-                "source_filename": uploaded_file.name,
-                "raw_text": text
+                "source_filename": uploaded_file.name
             }
 
             # Display MongoDB document
@@ -378,17 +376,20 @@ def main():
 
         if st.button("Run Query"):
             with st.spinner("Processing query..."):
-                # Convert natural language to MongoDB query
-                mongo_query = process_natural_language_query(claude, query)
+                # Convert natural language to MongoDB query using structured outputs
+                query_result = process_natural_language_query(claude, query)
+                pipeline = query_result["pipeline"]
 
                 # Display MongoDB query
                 st.subheader("MongoDB Query")
-                st.code(mongo_query, language="json")
+                st.code(json.dumps(pipeline, indent=2), language="json")
+
+                # Show explanation if provided
+                if "explanation" in query_result:
+                    st.info(f"**Query explanation:** {query_result['explanation']}")
 
                 # Execute query
                 try:
-                    pipeline = json.loads(mongo_query)
-
                     # Security: Validate pipeline before execution
                     validate_pipeline(pipeline)
 
