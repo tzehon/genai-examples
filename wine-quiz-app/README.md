@@ -7,11 +7,15 @@ An interactive React web application for learning wine categories and varietals 
 ### Quiz Modes
 - **Category Match**: Match wines to their style category (e.g., "Gamay" → Light-Bodied Red)
 - **Wine Selection**: Select all wines belonging to a category (multi-select)
-- **Pronunciation Quiz**: Learn correct wine pronunciations with phonetic guides
 - **Quick Fire**: Rapid true/false questions with 10-second timer
 - **Description Match**: Match style descriptions to categories
 - **Odd One Out**: Find the wine that doesn't belong among 4 options
 - **Origin Match**: Match wines to their country/region of origin
+
+### Audio Pronunciation
+- Speaker icon on all wine names for text-to-speech pronunciation
+- Uses browser's built-in speech synthesis
+- Prefers Italian/French/Spanish voices for authentic pronunciation
 
 ### Progress Tracking
 - Spaced repetition (SM-2 algorithm) for optimal review scheduling
@@ -82,11 +86,11 @@ wine-quiz-app/
 │   │   ├── QuizResults.jsx
 │   │   ├── StudyMode.jsx
 │   │   ├── ProgressDashboard.jsx
-│   │   └── Settings.jsx
+│   │   ├── Settings.jsx
+│   │   └── SpeakButton.jsx     # Text-to-speech button
 │   ├── quizModes/
 │   │   ├── CategoryMatch.jsx
 │   │   ├── WineSelection.jsx
-│   │   ├── PronunciationQuiz.jsx
 │   │   ├── QuickFire.jsx
 │   │   ├── DescriptionMatch.jsx
 │   │   ├── OddOneOut.jsx
@@ -97,8 +101,8 @@ wine-quiz-app/
 │   │   └── useSpacedRepetition.js
 │   ├── utils/
 │   │   ├── shuffleArray.js
-│   │   ├── generateFakePronunciations.js
-│   │   └── calculateMastery.js
+│   │   ├── calculateMastery.js
+│   │   └── speak.js            # Text-to-speech utility
 │   ├── styles.css              # All styles
 │   └── main.jsx                # Entry point
 └── index.html
@@ -143,3 +147,44 @@ The app works offline using cached data from localStorage. An offline indicator 
 ## Mobile First
 
 Designed primarily for mobile use while reading a wine book, with responsive layout for larger screens.
+
+## Deploying to Vercel
+
+Since this app is in a subfolder of a monorepo, configure Vercel to use the correct root directory:
+
+### Option 1: Vercel Dashboard
+
+1. Go to [vercel.com](https://vercel.com) and import your repository
+2. In the configuration step, set **Root Directory** to `wine-quiz-app`
+3. Vercel auto-detects Vite and configures build settings
+4. Click **Deploy**
+
+### Option 2: Vercel CLI
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# From the wine-quiz-app directory
+cd wine-quiz-app
+vercel
+
+# Or specify root directory from repo root
+vercel --cwd wine-quiz-app
+```
+
+### Option 3: vercel.json (in wine-quiz-app folder)
+
+```json
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
+}
+```
+
+Then set root directory to `wine-quiz-app` in Vercel dashboard.
+
+### Environment
+
+No environment variables required - the app uses static JSON files and localStorage.
