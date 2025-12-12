@@ -70,14 +70,14 @@ for date, folder in projects:
 ]]]-->
 ### [wine-quiz-app](https://github.com/tzehon/research/tree/main/wine-quiz-app) (2025-12-12)
 
-A mobile-first wine education app built with [React](https://react.dev/) and [Vite](https://vitejs.dev/) that helps users master wine knowledge through seven interactive quiz modes, including category matching, pronunciation practice, and rapid-fire challenges. The application implements spaced repetition learning (SM-2 algorithm) to optimize retention and tracks detailed progress metrics including daily streaks and per-wine mastery levels. Wine data is stored as JSON files that can be updated without redeployment, and all user progress persists locally with offline support, making it ideal for studying alongside wine books.
+A mobile-first [React](https://react.dev/) web application helps wine enthusiasts learn varietals and categories through six interactive quiz modes, including timed challenges, category matching, and origin identification. Built with [Vite](https://vitejs.dev/), the app implements spaced repetition learning (SM-2 algorithm) to optimize retention, tracks daily streaks and per-wine mastery, and includes text-to-speech pronunciation for all wine names. Wine data is stored in editable JSON files for easy content updates, while user progress persists in localStorage with offline support and import/export capabilities.
 
 **Key Features:**
-- Seven quiz modes covering categories, pronunciation, origins, and descriptions
-- Spaced repetition algorithm for personalized review scheduling
-- Dark mode, adjustable difficulty, and customizable quiz settings
-- Progress tracking with export/import functionality
-- Works offline with localStorage caching
+- Six quiz modes: Category Match, Wine Selection, Quick Fire (10-sec timer), Description Match, Odd One Out, and Origin Match
+- Spaced repetition algorithm tracks 50+ wines across 7 categories (sparkling, whites, rosé, reds)
+- Audio pronunciation using browser speech synthesis with language-specific voices
+- Dark mode, adjustable difficulty, and customizable session lengths
+- Study mode for browsing wines by category with progress marking
 
 ### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
 
