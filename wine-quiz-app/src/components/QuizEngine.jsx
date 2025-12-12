@@ -251,7 +251,6 @@ function generateCategoryMatchQuestion(allWines, allStyles, optionCount) {
 
 function generateWineSelectionQuestion(allWines, filteredStyles, allStyles) {
   const style = getRandomItem(filteredStyles);
-  const correctWines = style.wines.map(w => w.name);
 
   // Get some incorrect wines from other styles
   const otherWines = allWines
@@ -280,11 +279,16 @@ function generateWineSelectionQuestion(allWines, filteredStyles, allStyles) {
     })
   ]).slice(0, 8);
 
+  // Only count correct wines that are actually shown in the options
+  const correctWines = allOptions.filter(o => o.isCorrect).map(o => o.name);
+  const correctCount = correctWines.length;
+
   return {
     mode: 'wine-selection',
     style,
     options: allOptions,
     correctWines,
+    correctCount,
     hint: `${style.description.split('.')[0]}.`
   };
 }

@@ -748,6 +748,13 @@ body {
   color: #2D2926;
 }
 
+.selection-hint {
+  margin-top: var(--spacing-sm);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 /* Checkbox Grid */
 .checkbox-grid {
   display: grid;

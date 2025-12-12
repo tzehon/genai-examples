@@ -58,6 +58,11 @@ export function WineSelection({ question, onAnswer, showFeedback, darkMode }) {
         >
           {question.style.name}
         </div>
+        {!showFeedback && question.correctCount && (
+          <div className="selection-hint">
+            Select {question.correctCount} wine{question.correctCount > 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {!showFeedback && question.hint && (
