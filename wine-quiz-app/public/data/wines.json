@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2024-12-15",
+  "styles": [
+    {
+      "id": "sparkling",
+      "name": "Sparkling Wine",
+      "color": "#F7E7CE",
+      "description": "Carbonated by yeast fermenting in an airtight container. Two main methods: traditional method and tank method.",
+      "wines": [
+        { "name": "Cava", "origin": "Spain" },
+        { "name": "Champagne", "origin": "France" },
+        { "name": "Lambrusco", "origin": "Italy" },
+        { "name": "Prosecco", "origin": "Italy" }
+      ]
+    },
+    {
+      "id": "light-white",
+      "name": "Light-Bodied White Wine",
+      "color": "#F5F5DC",
+      "description": "Known for dry and refreshingly tart flavor. Best enjoyed young when they have maximum acidity and bold fruit.",
+      "wines": [
+        { "name": "Albariño", "origin": "Spain" },
+        { "name": "Grüner Veltliner", "origin": "Austria" },
+        { "name": "Muscadet", "origin": "France" },
+        { "name": "Pinot Gris", "origin": "France/Italy" },
+        { "name": "Sauvignon Blanc", "origin": "France" },
+        { "name": "Soave", "origin": "Italy" },
+        { "name": "Vermentino", "origin": "Italy" }
+      ]
+    },
+    {
+      "id": "full-white",
+      "name": "Full-Bodied White Wine",
+      "color": "#FFD700",
+      "description": "Known for rich, bold flavors. Often aged on lees or in oak barrels to add unctuous flavors of cream, vanilla, and butter.",
+      "wines": [
+        { "name": "Chardonnay", "origin": "France" },
+        { "name": "Marsanne Blend", "origin": "France" },
+        { "name": "Sémillon", "origin": "France" },
+        { "name": "Viognier", "origin": "France" }
+      ]
+    },
+    {
+      "id": "aromatic-white",
+      "name": "Aromatic White Wine",
+      "color": "#FFFACD",
+      "description": "Highly perfumed with sweet-fruit aromas but can range from dry to sweet. Ideal pairing partners with Asian and Indian cuisine.",
+      "wines": [
+        { "name": "Chenin Blanc", "origin": "France" },
+        { "name": "Gewürztraminer", "origin": "Germany/France" },
+        { "name": "Muscat Blanc", "origin": "France" },
+        { "name": "Riesling", "origin": "Germany" },
+        { "name": "Torrontés", "origin": "Argentina" }
+      ]
+    },
+    {
+      "id": "rose",
+      "name": "Rosé Wine",
+      "color": "#FFB6C1",
+      "description": "Produced when red grape skins macerate in their juices briefly. Ranges from dry to sweet depending on the grape.",
+      "wines": [
+        { "name": "Rosé", "origin": "Various" }
+      ]
+    },
+    {
+      "id": "light-red",
+      "name": "Light-Bodied Red Wine",
+      "color": "#DC143C",
+      "description": "Translucent in color with moderately high acidity. Known for perfumed aromas best collected in a large globe-shaped glass.",
+      "wines": [
+        { "name": "Gamay", "origin": "France" },
+        { "name": "Pinot Noir", "origin": "France" }
+      ]
+    },
+    {
+      "id": "medium-red",
+      "name": "Medium-Bodied Red Wine",
+      "color": "#8B0000",
+      "description": "Often called 'food wines' for their excellent ability to pair with a wide range of food. Characterized by dominant red-fruit flavors.",
+      "wines": [
+        { "name": "Barbera", "origin": "Italy" },
+        { "name": "Cabernet Franc", "origin": "France" },
+        { "name": "Carignan", "origin": "France/Spain" },
+        { "name": "Carménère", "origin": "Chile" },
+        { "name": "Grenache", "origin": "Spain/France" },
+        { "name": "Mencía", "origin": "Spain" },
+        { "name": "Merlot", "origin": "France" },
+        { "name": "Montepulciano", "origin": "Italy" },
+        { "name": "Negroamaro", "origin": "Italy" },
+        { "name": "Rhône/GSM Blend", "origin": "France" },
+        { "name": "Sangiovese", "origin": "Italy" },
+        { "name": "Valpolicella Blend", "origin": "Italy" },
+        { "name": "Zinfandel", "origin": "USA/Croatia" }
+      ]
+    }
+  ]
+}
