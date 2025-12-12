@@ -14,12 +14,6 @@ const quizModes = [
     icon: '☑️'
   },
   {
-    id: 'pronunciation',
-    name: 'Pronunciation',
-    description: 'Learn how to pronounce wine names',
-    icon: '🗣️'
-  },
-  {
     id: 'quick-fire',
     name: 'Quick Fire',
     description: 'Rapid yes/no questions with timer',
@@ -94,7 +88,7 @@ export function QuizModeSelector({
     }
   };
 
-  const canStart = selectedModes.length > 0 && (selectedCategories.length > 0 || selectedCategories.length === 0);
+  const canStart = selectedModes.length > 0 && selectedCategories.length > 0;
 
   return (
     <div className={`quiz-mode-selector ${darkMode ? 'dark' : ''}`}>
@@ -134,10 +128,9 @@ export function QuizModeSelector({
             className="select-all-btn"
             onClick={handleSelectAllCategories}
           >
-            {selectedCategories.length === categories.length ? 'Deselect All' : 'All Categories'}
+            {selectedCategories.length === categories.length ? 'Deselect All' : 'Select All'}
           </button>
         </div>
-        <p className="section-hint">Leave empty to include all categories</p>
         <div className="category-grid">
           {categories.map(category => (
             <button
