@@ -115,12 +115,13 @@ A Python automation tool streamlines the deployment of [MongoDB Atlas](https://w
 
 ### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
-An intelligent PDF invoice processor leverages [Streamlit](https://streamlit.io/) to automatically extract, classify, and query financial documents using a sophisticated multi-stage approach. The system employs the `paraphrase-multilingual-mpnet-base-v2` model for 768-dimensional vector embeddings, [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) Vector Search for similarity matching (0.85 threshold), and Claude Sonnet 4.5 for metadata extraction and merchant verification. As the system processes documents over time, it builds an intelligent merchant database that recognizes variations and synonyms across 50+ languages—automatically linking "Grab Singapore Pte Ltd," "Grab SG," and even cross-lingual equivalents to the same canonical merchant entry.
+A [Streamlit](https://streamlit.io) application leverages Claude's vision capabilities and vector similarity search to automatically process PDF invoices, classify merchants across multiple languages, and enable natural language database queries. The system uses the `paraphrase-multilingual-mpnet-base-v2` model to generate 768-dimensional embeddings for merchant names, matching them against existing entries in [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) using vector search with a 0.85 cosine similarity threshold. When uncertainty exists, Claude Sonnet 4.5 provides LLM verification, building a synonym database over time that handles variations like "Grab Singapore Pte Ltd" versus "Grab SG" and cross-language matching (e.g., "香港餐厅" with "Hong Kong Restaurant").
 
-**Key capabilities:**
-- **Smart merchant classification**: Combines exact matching, vector similarity, and LLM verification to reduce duplicates
-- **Natural language querying**: Converts plain English queries like "Show Grab receipts from last month" into MongoDB aggregation pipelines
-- **Multilingual support**: Handles English, Chinese, and 48+ other languages with semantic understanding across translations
-- **Cost-efficient**: Free MongoDB M0 tier, ~$0.01-0.05 per document processing with Anthropic API
+**Key Technical Features:**
+- Direct PDF analysis via Claude Vision API preserving layout and formatting (no intermediate text extraction)
+- Structured outputs using Claude's tool use feature for guaranteed valid JSON responses
+- Three-tier merchant classification: exact synonym match → vector similarity (>0.85) → LLM verification
+- Natural language to MongoDB aggregation pipeline conversion with query explanations
+- Free tier compatible: MongoDB Atlas M0 (512MB) and pay-per-use Anthropic API (~$0.02-0.10 per document)
 
 <!--[[[end]]]-->
