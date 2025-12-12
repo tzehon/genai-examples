@@ -1,7 +1,0 @@
-An intelligent PDF invoice processor leverages [Streamlit](https://streamlit.io/) to automatically extract, classify, and query financial documents using a sophisticated multi-stage approach. The system employs the `paraphrase-multilingual-mpnet-base-v2` model for 768-dimensional vector embeddings, [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) Vector Search for similarity matching (0.85 threshold), and Claude Sonnet 4.5 for metadata extraction and merchant verification. As the system processes documents over time, it builds an intelligent merchant database that recognizes variations and synonyms across 50+ languages—automatically linking "Grab Singapore Pte Ltd," "Grab SG," and even cross-lingual equivalents to the same canonical merchant entry.
-
-**Key capabilities:**
-- **Smart merchant classification**: Combines exact matching, vector similarity, and LLM verification to reduce duplicates
-- **Natural language querying**: Converts plain English queries like "Show Grab receipts from last month" into MongoDB aggregation pipelines
-- **Multilingual support**: Handles English, Chinese, and 48+ other languages with semantic understanding across translations
-- **Cost-efficient**: Free MongoDB M0 tier, ~$0.01-0.05 per document processing with Anthropic API

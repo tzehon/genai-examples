@@ -4,11 +4,11 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
 
 ## Features
 
-- PDF text extraction
-- Automatic merchant classification
+- **PDF Vision Processing**: Direct PDF analysis using Claude's vision capabilities (no text extraction step)
+- **Structured Outputs**: Guaranteed valid JSON responses using Claude's tool use feature
+- Automatic merchant classification with vector similarity
 - Invoice/receipt metadata extraction
-- Natural language querying
-- Vector similarity search
+- Natural language querying with query explanations
 - Multi-language support (English, Chinese)
 
 ## Technical Architecture
@@ -38,12 +38,13 @@ A Streamlit application that processes PDF invoices/receipts, automatically clas
      - `multilingual-e5-large`: Larger model with higher resource requirements
 
 2. **PDF Processor**
-   - PyMuPDF for text extraction
-   - Claude Sonnet 4.5 for metadata extraction
-   - Structured data parsing
+   - Claude Vision API for direct PDF analysis (preserves layout, tables, formatting)
+   - Claude Structured Outputs (tool use) for guaranteed valid JSON responses
+   - No intermediate text extraction step - better accuracy for complex layouts
 
 3. **Query Interface**
-   - Natural language to MongoDB query conversion
+   - Natural language to MongoDB query conversion using structured outputs
+   - Query explanations provided alongside generated pipelines
    - Cross-collection aggregation support
    - Real-time result display
 
@@ -224,8 +225,8 @@ The application will:
 1. Click the **PDF Processing** tab
 2. Click **Browse files** and select an invoice/receipt PDF
 3. The system will:
-   - Extract text from the PDF
-   - Use Claude to extract metadata (merchant, date, amount, items)
+   - Send the PDF directly to Claude Vision API (preserves layout and formatting)
+   - Extract metadata using structured outputs (guaranteed valid JSON)
    - Automatically classify the merchant using:
      - Exact synonym matching
      - Vector similarity search (>0.85 threshold)
@@ -369,18 +370,17 @@ graph TD
 {
   merchant_id: ObjectId("..."),
   merchant_name: "Canonical Merchant Name",
-  date: ISODate("..."),
+  date: "2025-01-15",  // ISO 8601 format
   total_amount: 123.45,
   category: "receipt",
   currency: "SGD",
   payment_method: "credit_card",
   items: [
-    { name: "Item 1", price: 50.00 },
-    { name: "Item 2", price: 73.45 }
+    { description: "Item 1", quantity: 1, unit_price: 50.00 },
+    { description: "Item 2", quantity: 1, unit_price: 73.45 }
   ],
   processed_date: ISODate("..."),
-  source_filename: "invoice.pdf",
-  raw_text: "Original PDF text..."
+  source_filename: "invoice.pdf"
 }
 ```
 
@@ -388,7 +388,8 @@ graph TD
 
 1. **Document Upload**
    - Upload PDF invoice/receipt
-   - System extracts text and metadata
+   - Claude Vision analyzes document directly (preserves layout)
+   - Structured outputs extract metadata with guaranteed schema
    - Classifies merchant automatically
 
 2. **Merchant Classification**
@@ -482,18 +483,18 @@ graph TD
 
 ### PDF Processing Issues
 
-**Problem**: PDF text extraction is gibberish
-- **Cause**: PDF might be scanned image or have encoding issues
+**Problem**: PDF processing fails or times out
+- **Cause**: PDF might be too large or have many pages
 - **Solutions**:
-  1. Try a different PDF
-  2. Use PDFs with selectable text (not scanned images)
-  3. Consider adding OCR support for scanned documents
+  1. Try a smaller PDF (single page works best)
+  2. Check your Anthropic API rate limits
+  3. Split large PDFs into individual pages
 
 **Problem**: Metadata extraction is incomplete
 - **Cause**: Unclear or unusual invoice format
 - **Solutions**:
-  1. Check the raw text extraction looks correct
-  2. Claude does its best but complex layouts may confuse it
+  1. Claude Vision handles most layouts well, including tables and multi-column formats
+  2. Very low quality scans may have reduced accuracy
   3. You can manually edit the extracted data before saving
 
 ### Query Issues
@@ -506,12 +507,12 @@ graph TD
   3. Check the generated MongoDB query for errors
   4. Verify merchant names match what's in your database
 
-**Problem**: `JSONDecodeError` when running queries
-- **Cause**: Claude generated invalid JSON
+**Problem**: Query generates unexpected pipeline
+- **Cause**: Ambiguous or complex query
 - **Solutions**:
-  1. Try rephrasing your query more clearly
-  2. Check the generated query and fix JSON syntax manually
-  3. Report the issue if it persists
+  1. Check the query explanation provided in the UI for insight
+  2. Try rephrasing your query more specifically
+  3. Review the generated pipeline and adjust your query accordingly
 
 ### Installation Issues
 
@@ -559,6 +560,8 @@ graph TD
 ## Technical Notes
 
 - **Model**: Using `claude-sonnet-4-5-20250929` (latest as of 2025)
+- **PDF Processing**: Claude Vision API with base64-encoded PDFs (no PyMuPDF dependency)
+- **Structured Outputs**: Tool use with JSON Schema for guaranteed valid responses
 - **Vector Dimensions**: 768 (from paraphrase-multilingual-mpnet-base-v2)
 - **Similarity Threshold**: 0.85 for automatic merchant matching
 - **Supported Languages**: 50+ including English, Chinese, Spanish, French, German, etc.
@@ -568,12 +571,12 @@ graph TD
 ## Cost Considerations
 
 - **MongoDB Atlas**: Free M0 tier available (512MB storage, sufficient for thousands of documents)
-- **Anthropic API**: Pay-per-use pricing
+- **Anthropic API**: Pay-per-use pricing (Claude Sonnet 4.5)
   - ~$3 per million input tokens
   - ~$15 per million output tokens
-  - Typical invoice processing: $0.01-0.05 per document
+  - PDF Vision processing: ~$0.02-0.10 per document (depends on PDF size/complexity)
   - Natural language queries: $0.001-0.01 per query
-- **Model Download**: Free, one-time 420MB download
+- **Model Download**: Free, one-time 420MB download (sentence-transformers model)
 
 ## Security Notes
 
