@@ -70,13 +70,14 @@ for date, folder in projects:
 ]]]-->
 ### [wine-quiz-app](https://github.com/tzehon/research/tree/main/wine-quiz-app) (2025-12-12)
 
-An interactive [React](https://react.dev/) web application for learning wine categories and varietals through seven different quiz modes: category matching, multi-select wine selection, pronunciation quizzes with phonetic guides, timed quick-fire true/false questions, description matching, odd-one-out identification, and origin matching with country flags. The app implements the SM-2 spaced repetition algorithm to schedule reviews optimally, tracking per-wine and per-category progress with daily streak monitoring and overall mastery percentages stored in localStorage. Wine data is loaded from external JSON files (`/public/data/wines.json` and `pronunciations.json`), enabling content updates without redeployment, while the mobile-first responsive design with dark mode support makes it ideal for studying alongside a wine book.
+A mobile-first wine education app built with [React](https://react.dev/) and [Vite](https://vitejs.dev/) that helps users master wine knowledge through seven interactive quiz modes, including category matching, pronunciation practice, and rapid-fire challenges. The application implements spaced repetition learning (SM-2 algorithm) to optimize retention and tracks detailed progress metrics including daily streaks and per-wine mastery levels. Wine data is stored as JSON files that can be updated without redeployment, and all user progress persists locally with offline support, making it ideal for studying alongside wine books.
 
 **Key Features:**
-- **7 quiz modes**: Category match, wine selection (multi-select), pronunciation, quick-fire (10s timer), description match, odd-one-out, origin match
-- **Progress tracking**: SM-2 spaced repetition, streak calendar, mastery percentages, export/import JSON
-- **37 wines** across 7 categories: Sparkling, Light/Full-Bodied White, Aromatic White, Rosé, Light/Medium-Bodied Red
-- **Offline support**: localStorage caching with offline indicator
+- Seven quiz modes covering categories, pronunciation, origins, and descriptions
+- Spaced repetition algorithm for personalized review scheduling
+- Dark mode, adjustable difficulty, and customizable quiz settings
+- Progress tracking with export/import functionality
+- Works offline with localStorage caching
 
 ### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
 
