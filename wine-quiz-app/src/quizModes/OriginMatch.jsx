@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import { SpeakButton } from '../components/SpeakButton';
+
 export function OriginMatch({ question, onAnswer, showFeedback, darkMode }) {
+  const [showHint, setShowHint] = useState(false);
+
   const handleSelect = (option) => {
     if (showFeedback) return;
 
@@ -17,8 +22,23 @@ export function OriginMatch({ question, onAnswer, showFeedback, darkMode }) {
     <div className={`quiz-mode origin-match ${darkMode ? 'dark' : ''}`}>
       <div className="question-prompt">
         <h3>Where does this wine originate?</h3>
-        <div className="wine-name">{question.wine.name}</div>
+        <div className="wine-name">
+          {question.wine.name}
+          <SpeakButton text={question.wine.name} className="speak-inline" />
+        </div>
       </div>
+
+      {!showFeedback && question.hint && (
+        <div className="hint-container">
+          {showHint ? (
+            <div className="hint-text">{question.hint}</div>
+          ) : (
+            <button className="hint-btn" onClick={() => setShowHint(true)}>
+              Show Hint
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="origin-options">
         {question.options.map((option, index) => (
