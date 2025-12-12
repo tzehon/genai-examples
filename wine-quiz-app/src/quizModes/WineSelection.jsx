@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { SpeakButton } from '../components/SpeakButton';
 
 export function WineSelection({ question, onAnswer, showFeedback, darkMode }) {
   const [selected, setSelected] = useState(new Set());
+  const [showHint, setShowHint] = useState(false);
+  const [hoveredOption, setHoveredOption] = useState(null);
 
   const handleToggle = (wineName) => {
     if (showFeedback) return;
@@ -57,31 +60,61 @@ export function WineSelection({ question, onAnswer, showFeedback, darkMode }) {
         </div>
       </div>
 
+      {!showFeedback && question.hint && (
+        <div className="hint-container">
+          {showHint ? (
+            <div className="hint-text">{question.hint}</div>
+          ) : (
+            <button className="hint-btn" onClick={() => setShowHint(true)}>
+              Show Hint
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="checkbox-grid">
         {question.options.map((option) => (
-          <label
-            key={option.name}
-            className={`checkbox-option ${selected.has(option.name) ? 'selected' : ''} ${
-              showFeedback
-                ? option.isCorrect
-                  ? 'correct'
-                  : selected.has(option.name)
-                    ? 'incorrect'
-                    : ''
-                : ''
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(option.name)}
-              onChange={() => handleToggle(option.name)}
-              disabled={showFeedback}
-            />
-            <span className="checkbox-text">{option.name}</span>
-            {showFeedback && option.isCorrect && (
-              <span className="correct-indicator">✓</span>
-            )}
-          </label>
+          <div key={option.name} className="checkbox-wrapper">
+            <label
+              className={`checkbox-option ${selected.has(option.name) ? 'selected' : ''} ${
+                showFeedback
+                  ? option.isCorrect
+                    ? 'correct'
+                    : selected.has(option.name)
+                      ? 'incorrect'
+                      : ''
+                  : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selected.has(option.name)}
+                onChange={() => handleToggle(option.name)}
+                disabled={showFeedback}
+              />
+              <span className="checkbox-text">{option.name}</span>
+              <SpeakButton text={option.name} />
+              {showFeedback && option.isCorrect && (
+                <span className="correct-indicator">✓</span>
+              )}
+              {!showFeedback && option.origin && (
+                <span className="info-icon-wrapper">
+                  <span
+                    className="info-icon"
+                    onMouseEnter={() => setHoveredOption(option.name)}
+                    onMouseLeave={() => setHoveredOption(null)}
+                  >
+                    ⓘ
+                  </span>
+                  {hoveredOption === option.name && (
+                    <div className="checkbox-tooltip">
+                      <span className="tooltip-origin">{option.origin}</span>
+                    </div>
+                  )}
+                </span>
+              )}
+            </label>
+          </div>
         ))}
       </div>
 
