@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 const navItems = [
   { id: 'home', label: 'Home', icon: '🏠' },
   { id: 'quiz', label: 'Quiz', icon: '🎯' },
@@ -8,7 +6,7 @@ const navItems = [
   { id: 'settings', label: 'Settings', icon: '⚙️' }
 ];
 
-export function Navigation({ currentView, onNavigate, darkMode }) {
+export function Navigation({ currentView, onNavigate, darkMode, onToggleDarkMode }) {
   return (
     <nav className={`navigation ${darkMode ? 'dark' : ''}`}>
       <div className="nav-brand">
@@ -26,6 +24,14 @@ export function Navigation({ currentView, onNavigate, darkMode }) {
             <span className="nav-label">{item.label}</span>
           </button>
         ))}
+        <button
+          className="nav-item dark-mode-toggle"
+          onClick={onToggleDarkMode}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <span className="nav-icon">{darkMode ? '☀️' : '🌙'}</span>
+          <span className="nav-label">{darkMode ? 'Light' : 'Dark'}</span>
+        </button>
       </div>
     </nav>
   );

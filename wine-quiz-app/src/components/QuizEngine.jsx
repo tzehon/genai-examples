@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { shuffleArray, getRandomItems, getRandomItem } from '../utils/shuffleArray';
 import { CategoryMatch } from '../quizModes/CategoryMatch';
 import { WineSelection } from '../quizModes/WineSelection';
-import { PronunciationQuiz } from '../quizModes/PronunciationQuiz';
 import { QuickFire } from '../quizModes/QuickFire';
 import { DescriptionMatch } from '../quizModes/DescriptionMatch';
 import { OddOneOut } from '../quizModes/OddOneOut';
@@ -18,7 +17,8 @@ export function QuizEngine({
   onAnswer,
   onComplete,
   onExit,
-  darkMode
+  darkMode,
+  onToggleDarkMode
 }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -134,8 +134,6 @@ export function QuizEngine({
         return <CategoryMatch {...commonProps} />;
       case 'wine-selection':
         return <WineSelection {...commonProps} />;
-      case 'pronunciation':
-        return <PronunciationQuiz {...commonProps} />;
       case 'quick-fire':
         return <QuickFire {...commonProps} onTimeUp={handleAnswer} />;
       case 'description-match':
@@ -169,6 +167,13 @@ export function QuizEngine({
         <div className="quiz-score">
           Score: {score}
         </div>
+        <button
+          className="dark-mode-toggle-btn"
+          onClick={onToggleDarkMode}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {darkMode ? '☀️' : '🌙'}
+        </button>
       </div>
 
       <div className="quiz-content">
@@ -203,9 +208,7 @@ function generateQuestion(mode, allWines, filteredStyles, allStyles, pronunciati
     case 'category-match':
       return generateCategoryMatchQuestion(allWines, allStyles, optionCount);
     case 'wine-selection':
-      return generateWineSelectionQuestion(allWines, filteredStyles);
-    case 'pronunciation':
-      return generatePronunciationQuestion(allWines, pronunciations, optionCount);
+      return generateWineSelectionQuestion(allWines, filteredStyles, allStyles);
     case 'quick-fire':
       return generateQuickFireQuestion(allWines, allStyles);
     case 'description-match':
@@ -224,63 +227,65 @@ function generateCategoryMatchQuestion(allWines, allStyles, optionCount) {
   const correctStyle = allStyles.find(s => s.id === wine.styleId);
 
   // Get incorrect options
-  const incorrectStyles = allStyles
-    .filter(s => s.id !== wine.styleId)
-    .slice(0, optionCount - 1);
+  const incorrectStyles = getRandomItems(
+    allStyles.filter(s => s.id !== wine.styleId),
+    optionCount - 1
+  );
 
   const options = shuffleArray([
-    { id: correctStyle.id, name: correctStyle.name, color: correctStyle.color, isCorrect: true },
-    ...incorrectStyles.map(s => ({ id: s.id, name: s.name, color: s.color, isCorrect: false }))
+    { id: correctStyle.id, name: correctStyle.name, color: correctStyle.color, description: correctStyle.description, isCorrect: true },
+    ...incorrectStyles.map(s => ({ id: s.id, name: s.name, color: s.color, description: s.description, isCorrect: false }))
   ]);
+
+  // Generate hint based on wine characteristics
+  const hint = `This wine originates from ${wine.origin}.`;
 
   return {
     mode: 'category-match',
     wine,
     options,
-    correctAnswer: correctStyle.id
+    correctAnswer: correctStyle.id,
+    hint
   };
 }
 
-function generateWineSelectionQuestion(allWines, filteredStyles) {
+function generateWineSelectionQuestion(allWines, filteredStyles, allStyles) {
   const style = getRandomItem(filteredStyles);
   const correctWines = style.wines.map(w => w.name);
 
   // Get some incorrect wines from other styles
   const otherWines = allWines
-    .filter(w => w.styleId !== style.id)
-    .map(w => w.name);
+    .filter(w => w.styleId !== style.id);
 
-  const incorrectWines = getRandomItems(otherWines, Math.min(4, otherWines.length));
+  const incorrectWinesSample = getRandomItems(otherWines, Math.min(4, otherWines.length));
 
+  // Build options with full wine data for tooltips
   const allOptions = shuffleArray([
-    ...correctWines.map(name => ({ name, isCorrect: true })),
-    ...incorrectWines.map(name => ({ name, isCorrect: false }))
+    ...style.wines.map(w => ({
+      name: w.name,
+      origin: w.origin,
+      styleName: style.name,
+      styleColor: style.color,
+      isCorrect: true
+    })),
+    ...incorrectWinesSample.map(w => {
+      const wineStyle = allStyles.find(s => s.id === w.styleId);
+      return {
+        name: w.name,
+        origin: w.origin,
+        styleName: wineStyle?.name || 'Unknown',
+        styleColor: wineStyle?.color || '#888',
+        isCorrect: false
+      };
+    })
   ]).slice(0, 8);
 
   return {
     mode: 'wine-selection',
     style,
     options: allOptions,
-    correctWines
-  };
-}
-
-function generatePronunciationQuestion(allWines, pronunciations, optionCount) {
-  // Filter wines that have pronunciations
-  const winesWithPronunciations = allWines.filter(w => pronunciations && pronunciations[w.name]);
-
-  if (winesWithPronunciations.length === 0) {
-    return null;
-  }
-
-  const wine = getRandomItem(winesWithPronunciations);
-  const correctPronunciation = pronunciations[wine.name].simple;
-
-  return {
-    mode: 'pronunciation',
-    wine,
-    correctPronunciation,
-    optionCount
+    correctWines,
+    hint: `${style.description.split('.')[0]}.`
   };
 }
 
@@ -306,17 +311,19 @@ function generateQuickFireQuestion(allWines, allStyles) {
     statement,
     isTrue,
     wine,
-    correctStyle
+    correctStyle,
+    hint: `Think about wines from ${wine.origin}.`
   };
 }
 
 function generateDescriptionMatchQuestion(filteredStyles, allStyles, optionCount) {
   const style = getRandomItem(filteredStyles);
+  const exampleWines = style.wines.slice(0, 2).map(w => w.name).join(', ');
 
   const options = shuffleArray([
-    { id: style.id, name: style.name, color: style.color, isCorrect: true },
+    { id: style.id, name: style.name, color: style.color, description: style.description, isCorrect: true },
     ...getRandomItems(allStyles.filter(s => s.id !== style.id), optionCount - 1)
-      .map(s => ({ id: s.id, name: s.name, color: s.color, isCorrect: false }))
+      .map(s => ({ id: s.id, name: s.name, color: s.color, description: s.description, isCorrect: false }))
   ]);
 
   return {
@@ -324,7 +331,8 @@ function generateDescriptionMatchQuestion(filteredStyles, allStyles, optionCount
     description: style.description,
     style,
     options,
-    correctAnswer: style.id
+    correctAnswer: style.id,
+    hint: `Examples of this style include ${exampleWines}.`
   };
 }
 
@@ -367,7 +375,8 @@ function generateOddOneOutQuestion(allWines, filteredStyles) {
     options,
     oddWine: oddWine.name,
     mainStyle,
-    oddStyle
+    oddStyle,
+    hint: `Three wines share the same style category. Look for the one from a different category.`
   };
 }
 
@@ -391,6 +400,7 @@ function generateOriginMatchQuestion(allWines, optionCount) {
     mode: 'origin-match',
     wine,
     options,
-    correctOrigins
+    correctOrigins,
+    hint: `This is a ${wine.styleName.toLowerCase()}.`
   };
 }

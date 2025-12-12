@@ -71,14 +71,16 @@ export function App() {
     document.body.classList.toggle('dark-mode', progress.settings.darkMode);
   }, [progress.settings.darkMode]);
 
-  // Initialize quiz config with settings
+  // Initialize quiz config with settings and all categories
   useEffect(() => {
+    const allCategoryIds = getAllStyles().map(s => s.id);
     setQuizConfig(prev => ({
       ...prev,
       selectedModes: [...progress.settings.enabledModes],
+      selectedCategories: allCategoryIds,
       questionCount: progress.settings.questionsPerSession
     }));
-  }, [progress.settings.enabledModes, progress.settings.questionsPerSession]);
+  }, [progress.settings.enabledModes, progress.settings.questionsPerSession, getAllStyles]);
 
   const handleNavigate = useCallback((view) => {
     setCurrentView(view);
@@ -172,6 +174,7 @@ export function App() {
             onComplete={handleQuizComplete}
             onExit={handleExitQuiz}
             darkMode={progress.settings.darkMode}
+            onToggleDarkMode={() => updateSettings({ darkMode: !progress.settings.darkMode })}
           />
         );
       }
@@ -248,6 +251,7 @@ export function App() {
           currentView={currentView}
           onNavigate={handleNavigate}
           darkMode={progress.settings.darkMode}
+          onToggleDarkMode={() => updateSettings({ darkMode: !progress.settings.darkMode })}
         />
       )}
 
