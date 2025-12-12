@@ -1055,6 +1055,7 @@ body {
   background: var(--bg-card);
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
