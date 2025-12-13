@@ -1,0 +1,7 @@
+MongoDB driver defaults already provide failover resilience without any configuration needed - this full-stack application proves it by comparing default settings against misconfigured overrides during real [MongoDB Atlas](https://www.mongodb.com/atlas) failovers. Using separate MongoClient instances with different configurations, the app triggers actual primary failovers via the Atlas Admin API and runs continuous read/write operations to demonstrate that the default 30-second `serverSelectionTimeoutMS` and automatic retry settings handle elections gracefully, while overriding these with short timeouts (2s) and disabled retries causes failures. Built with Node.js, React, TypeScript, and Socket.IO, it provides real-time visualization of cluster topology changes and side-by-side operation results.
+
+**Key findings:**
+- Default driver settings (`retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000`) handle failovers with zero failures
+- Overriding with `serverSelectionTimeoutMS: 2000` and `retryWrites/retryReads: false` causes operations to fail during the ~8-10 second election window
+- The 30-second default timeout provides safety margin for network variability and cloud orchestration delays beyond the fast election itself
+- Modern [MongoDB drivers](https://www.mongodb.com/docs/drivers/) (4.2+ for writes, 6.0+ for reads) are pre-configured for production resilience

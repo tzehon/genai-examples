@@ -70,47 +70,58 @@ for date, folder in projects:
 ]]]-->
 ### [mongodb-ops-manager-kubernetes](https://github.com/tzehon/research/tree/main/mongodb-ops-manager-kubernetes) (2025-11-30)
 
-A comprehensive demonstration project deploys [MongoDB Ops Manager](https://www.mongodb.com/docs/ops-manager/current/) on Kubernetes using [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/), providing automated setup for TLS encryption via cert-manager, backup infrastructure with point-in-time recovery, LDAP integration, and external access configurations. The project includes scripts for GKE cluster creation, automated deployment of Ops Manager 8.0.x with a 3-node replica set application database, backup oplog and blockstore infrastructure, and managed MongoDB clusters (both ReplicaSet and sharded). Designed explicitly for learning and demonstration purposes rather than production use, it evolved from the deprecated MEKO operator to MCK with Helm-based installation, replacing manual certificate management with cert-manager automation and supporting split-horizon DNS for external connectivity.
+MongoDB Ops Manager can be deployed on Kubernetes using the MongoDB Controllers for Kubernetes (MCK) operator, providing a complete automated setup with TLS encryption via cert-manager, backup infrastructure with point-in-time recovery, and LDAP integration options. This educational project streamlines the deployment of Ops Manager 8.0.x with its application database (3-node replica set), automated backup stores (oplog + blockstore), and managed MongoDB clusters (both replica sets and sharded clusters) through a collection of bash scripts and YAML templates. The setup includes external access via split-horizon DNS or LoadBalancer services, with automatic certificate management and connection helpers for accessing deployed clusters.
 
-**Key Components:**
-- **Automated deployment**: Single `_launch.bash` script deploys entire stack (MCK operator, cert-manager, Ops Manager, backup infrastructure)
-- **Backup**: Automatic snapshots every 24 hours with configurable retention and 1-day point-in-time recovery window
-- **Resource requirements**: 48-64 cores, 192-256 GB RAM, 2-5 TB disk for full deployment
-- **Cleanup utility**: `_cleanup.bash` with options for Kubernetes-only (`-k`), files-only (`-f`), or full cleanup (`-a`)
+**Key capabilities:**
+- Automated full-stack deployment with `_launch.bash` script (MCK operator, cert-manager, Ops Manager, backup infrastructure)
+- External connectivity with automatic TLS certificate regeneration for LoadBalancer-exposed mongos instances
+- Helper scripts for retrieving API keys, connection strings, and establishing database connections (internal/external, with/without LDAP)
+- Cleanup utilities for restarting failed deployments or tearing down environments
+
+**Learn more:** [MongoDB Controllers for Kubernetes](https://www.mongodb.com/docs/kubernetes/current/) | [cert-manager](https://cert-manager.io/docs/)
 
 ### [mongodb-failover-tester](https://github.com/tzehon/research/tree/main/mongodb-failover-tester) (2025-11-28)
 
-MongoDB drivers come configured with robust failover defaults—30-second timeouts and automatic retries—that handle replica set elections seamlessly without any configuration. This [MongoDB Atlas](https://www.mongodb.com/atlas) failover testing application proves this by comparing two real [MongoClient](https://mongodb.github.io/node-mongodb-native/) instances side-by-side during live Atlas-triggered failovers: one using driver defaults succeeds with zero failures, while another with overridden settings (2-second timeout, retries disabled) fails repeatedly during the brief election window. The full-stack app uses three separate client connections—two for testing different configurations and one for monitoring cluster topology—to demonstrate that elections typically complete in under 10 seconds, well within the default 30-second safety margin, but faster than poorly configured clients can handle.
+MongoDB driver defaults already provide failover resilience without any configuration needed - this full-stack application proves it by comparing default settings against misconfigured overrides during real [MongoDB Atlas](https://www.mongodb.com/atlas) failovers. Using separate MongoClient instances with different configurations, the app triggers actual primary failovers via the Atlas Admin API and runs continuous read/write operations to demonstrate that the default 30-second `serverSelectionTimeoutMS` and automatic retry settings handle elections gracefully, while overriding these with short timeouts (2s) and disabled retries causes failures. Built with Node.js, React, TypeScript, and Socket.IO, it provides real-time visualization of cluster topology changes and side-by-side operation results.
 
 **Key findings:**
-- **Resilient config** (defaults): `retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000` → Zero failures
-- **Fragile config** (bad overrides): `retryWrites: false`, `retryReads: false`, `serverSelectionTimeoutMS: 2000` → Many failures
-- Elections complete in <10s, but 30s default provides safety margin for network variability
-- Modern drivers (4.2+ for writes, 6.0+ for reads) handle failover automatically—no code changes needed
+- Default driver settings (`retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000`) handle failovers with zero failures
+- Overriding with `serverSelectionTimeoutMS: 2000` and `retryWrites/retryReads: false` causes operations to fail during the ~8-10 second election window
+- The 30-second default timeout provides safety margin for network variability and cloud orchestration delays beyond the fast election itself
+- Modern [MongoDB drivers](https://www.mongodb.com/docs/drivers/) (4.2+ for writes, 6.0+ for reads) are pre-configured for production resilience
 
 ### [ops-manager-alerts-creation](https://github.com/tzehon/research/tree/main/ops-manager-alerts-creation) (2025-11-28)
 
-Automation script to create MongoDB Ops Manager alerts from an Excel configuration file using the Ops Manager API. Uses HTTP Digest authentication with API keys to directly call the Ops Manager API. Includes 27 pre-configured alerts covering replication, host health, disk I/O, backup agents, and monitoring agents. Adapted from the Atlas alert automation tool with Ops Manager-specific event types.
+A Python automation tool streamlines the deployment of [MongoDB Ops Manager](https://www.mongodb.com/products/ops-manager) alert configurations across multiple projects by reading threshold definitions from an Excel spreadsheet and creating alerts via the Ops Manager API. The script uses HTTP Digest authentication to generate JSON configurations for various alert types including replica set health, host metrics, disk partition monitoring, and Ops Manager-specific backup/agent alerts. It supports dry-run mode for previewing changes, tracks created alert IDs for selective cleanup, and includes utilities for discovering correct metric names by inspecting manually-created alerts through the API.
+
+**Key capabilities:**
+- Creates alerts from Excel configurations with low/high priority thresholds
+- Supports 30+ alert types covering replication lag, CPU usage, disk IOPS, connection counts, and agent health
+- Includes safe deletion options (automation-created only vs. all alerts)
+- Handles SSL certificates and provides metric name discovery tools for troubleshooting
+- Differs from Atlas automation by using direct API authentication instead of CLI and supporting Ops Manager-specific alert types
 
 ### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
 
-A Python automation tool streamlines the deployment of [MongoDB Atlas](https://www.mongodb.com/atlas) monitoring alerts by converting Excel configurations into alerts via the [Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The tool addresses the time-consuming manual process of implementing MongoDB's recommended alert configurations across multiple projects, which normally requires cross-referencing documentation, configuring 20+ alerts individually, and repeating the process for each Atlas project. Users define alert configurations once in a spreadsheet (metrics, thresholds, notification preferences), then deploy them consistently across any number of projects in seconds using a simple bash wrapper script.
+Organizations managing multiple MongoDB Atlas projects face a time-consuming challenge: manually implementing the 20+ recommended alert configurations requires cross-referencing documentation, mapping metrics to conditions, and repeating the process for each project. This automation tool solves that problem by allowing teams to define alert configurations once in an Excel spreadsheet and deploy them consistently across any number of Atlas projects in seconds using the [MongoDB Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The included spreadsheet was generated using an LLM to extract and structure [MongoDB's recommended alerts](https://www.mongodb.com/docs/atlas/architecture/current/monitoring-alerts/#recommended-atlas-alert-configurations), further reducing manual effort.
 
-**Key features:**
-- **Automated mapping**: Converts alert names to Atlas event types and metric names (e.g., "Disk IOPS", "Replication Lag", "Host Down")
-- **Flexible thresholds**: Supports multiple formats (percentage, time-based, size-based) with separate low/high priority alerts
-- **Safe operations**: Dry-run mode, duplicate detection, and selective deletion (automation-created alerts only vs. all alerts)
-- **Tracking**: Maintains `.automation_alert_ids.json` to distinguish automation-created alerts from default Atlas alerts
+**Key Features:**
+- Automated deployment of 20+ recommended Atlas alerts from Excel configuration
+- Dry-run mode to validate JSON generation before deployment
+- Selective deletion of automation-created alerts while preserving Atlas defaults
+- Customizable notification emails and role-based alerting
+- Duplicate detection to prevent redundant alert creation
+- Support for metric-based, event-based, and threshold-based alert types
 
 ### [invoice_processor](https://github.com/tzehon/research/tree/main/invoice_processor) (2025-11-27)
 
-A [Streamlit](https://streamlit.io) application leverages Claude's vision capabilities and vector similarity search to automatically process PDF invoices, classify merchants across multiple languages, and enable natural language database queries. The system uses the `paraphrase-multilingual-mpnet-base-v2` model to generate 768-dimensional embeddings for merchant names, matching them against existing entries in [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) using vector search with a 0.85 cosine similarity threshold. When uncertainty exists, Claude Sonnet 4.5 provides LLM verification, building a synonym database over time that handles variations like "Grab Singapore Pte Ltd" versus "Grab SG" and cross-language matching (e.g., "香港餐厅" with "Hong Kong Restaurant").
+A [Streamlit](https://streamlit.io/) application leverages [Claude's vision API](https://docs.anthropic.com/en/docs/build-with-claude/vision) to directly process PDF invoices and receipts without text extraction, using structured outputs to guarantee valid JSON responses. The system employs a sophisticated merchant classification pipeline that combines vector embeddings (via paraphrase-multilingual-mpnet-base-v2), MongoDB Atlas Vector Search, and LLM verification to automatically identify merchants across 50+ languages and name variations. Users can upload PDFs for automatic metadata extraction and merchant classification, then query their transaction data using natural language that gets converted to MongoDB aggregation pipelines.
 
 **Key Technical Features:**
-- Direct PDF analysis via Claude Vision API preserving layout and formatting (no intermediate text extraction)
-- Structured outputs using Claude's tool use feature for guaranteed valid JSON responses
-- Three-tier merchant classification: exact synonym match → vector similarity (>0.85) → LLM verification
-- Natural language to MongoDB aggregation pipeline conversion with query explanations
-- Free tier compatible: MongoDB Atlas M0 (512MB) and pay-per-use Anthropic API (~$0.02-0.10 per document)
+- Direct PDF vision processing preserves complex layouts and formatting
+- Multilingual merchant matching with 0.85+ similarity threshold for automatic classification
+- Vector search with 768-dimensional embeddings stored in MongoDB Atlas
+- Natural language querying with real-time MongoDB pipeline generation
+- Automatic synonym learning that improves merchant recognition over time
 
 <!--[[[end]]]-->
