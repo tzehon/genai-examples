@@ -1,7 +1,0 @@
-MongoDB drivers come configured with robust failover defaults—30-second timeouts and automatic retries—that handle replica set elections seamlessly without any configuration. This [MongoDB Atlas](https://www.mongodb.com/atlas) failover testing application proves this by comparing two real [MongoClient](https://mongodb.github.io/node-mongodb-native/) instances side-by-side during live Atlas-triggered failovers: one using driver defaults succeeds with zero failures, while another with overridden settings (2-second timeout, retries disabled) fails repeatedly during the brief election window. The full-stack app uses three separate client connections—two for testing different configurations and one for monitoring cluster topology—to demonstrate that elections typically complete in under 10 seconds, well within the default 30-second safety margin, but faster than poorly configured clients can handle.
-
-**Key findings:**
-- **Resilient config** (defaults): `retryWrites: true`, `retryReads: true`, `serverSelectionTimeoutMS: 30000` → Zero failures
-- **Fragile config** (bad overrides): `retryWrites: false`, `retryReads: false`, `serverSelectionTimeoutMS: 2000` → Many failures
-- Elections complete in <10s, but 30s default provides safety margin for network variability
-- Modern drivers (4.2+ for writes, 6.0+ for reads) handle failover automatically—no code changes needed
