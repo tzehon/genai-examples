@@ -491,8 +491,8 @@ EOF
 
     # Create MongoDBSearch resource
     cat ../templates/mdbsearch_template.yaml | sed \
-        -e "s|NAME|${fullName}|g" \
-        -e "s|NAMESPACE|${namespace}|g" \
+        -e "s|RESOURCENAME|${fullName}|g" \
+        -e "s|MDBNAMESPACE|${namespace}|g" \
         -e "s|SEARCHUSER|${searchUser}|g" \
         -e "s|SEARCHPASSWORDSECRET|${searchPasswordSecret}|g" \
         -e "s|SEARCHTLSSECRET|${searchTlsSecret}|g" > "${mdbsearch}"

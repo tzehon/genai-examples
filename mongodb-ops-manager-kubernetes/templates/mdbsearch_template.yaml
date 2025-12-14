@@ -5,13 +5,13 @@
 apiVersion: mongodb.com/v1
 kind: MongoDBSearch
 metadata:
-  name: NAME
-  namespace: NAMESPACE
+  name: RESOURCENAME
+  namespace: MDBNAMESPACE
 spec:
   # Reference to the MongoDB resource (same name by default)
   source:
     mongodbResourceRef:
-      name: NAME
+      name: RESOURCENAME
     username: SEARCHUSER
     passwordSecretRef:
       name: SEARCHPASSWORDSECRET
