@@ -12,6 +12,7 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 - **LDAP Integration** for both Ops Manager and database user authentication
 - **External Access** via split-horizon DNS or LoadBalancer/NodePort services
 - **ReplicaSet & Sharded Clusters** for demonstration and testing
+- **MongoDB Search (Preview)** - Full-text and vector search via `mongot` pods
 
 ## Architecture
 
@@ -234,6 +235,97 @@ bin/deploy_ldap.bash
 # - Groups: dbadmins, dbusers, readers, managers
 ```
 
+### MongoDB Search (Preview)
+
+> **Note:** MongoDB Search is currently a Preview feature. The feature and documentation may change during the Preview period.
+
+Deploy MongoDB Search nodes (`mongot`) to enable full-text search and vector search capabilities on ReplicaSets.
+
+**Requirements:**
+- MongoDB 8.2+ Enterprise Edition
+- ReplicaSet only (sharded clusters not supported)
+- MCK Operator 1.6+
+
+**Deploy with Search:**
+```bash
+# Deploy ReplicaSet with search nodes
+./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent --search
+
+# Or add to existing deployment command
+./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent -e horizon --search
+```
+
+**Verify Search is Working:**
+```bash
+# Run the automated test script
+bin/test_search.bash -n myproject1-myreplicaset
+
+# Keep test data for manual inspection
+bin/test_search.bash -n myproject1-myreplicaset -k
+```
+
+The test script:
+1. Inserts test documents
+2. Creates a search index
+3. Waits for index to become ready (handles eventual consistency)
+4. Runs a `$search` query
+5. Verifies results
+6. Cleans up test data
+
+**Example output:**
+```
+Testing MongoDB Search on myproject1-myreplicaset...
+
+[1/5] Connecting to cluster...
+      $ mongosh "mongodb://..."
+      OK - Connected
+
+[2/5] Inserting test documents...
+      $ db.getSiblingDB('search_test').movies.insertMany([...])
+      OK - Inserted 3 test documents
+
+[3/5] Creating search index...
+      $ db.getSiblingDB('search_test').movies.createSearchIndex('test_search_index', ...)
+      OK - Search index created
+
+[4/5] Waiting for index to be ready...
+      $ db.getSiblingDB('search_test').movies.getSearchIndexes()
+      status: 'BUILDING' (10s elapsed, waiting...)
+      status: 'READY' (25s elapsed)
+
+[5/5] Running $search query...
+      $ db.movies.aggregate([{ $search: { text: { query: 'matrix', path: ... } } }])
+      OK - Found 'The Matrix' document
+
+==============================================
+MongoDB Search is working correctly!
+==============================================
+```
+
+**Monitoring Search Nodes:**
+```bash
+# Check MongoDBSearch resource status
+kubectl -n mongodb get mdbs
+
+# Check search pod status
+kubectl -n mongodb get pods | grep search
+
+# View search pod logs
+kubectl -n mongodb logs <cluster-name>-search-0
+
+# Prometheus metrics (enabled by default on port 9946)
+kubectl -n mongodb port-forward <cluster-name>-search-0 9946:9946
+curl http://localhost:9946/metrics
+```
+
+**Resources created:**
+| Resource | Purpose |
+|----------|---------|
+| `MongoDBSearch` CR | Manages mongot StatefulSet |
+| `<cluster>-search-0` pod | mongot process for indexing and queries |
+| `<cluster>-search-sync-source` user | User with `searchCoordinator` role |
+| `<cluster>-search-tls` secret | TLS certificate for mongot |
+
 ## Backup Infrastructure
 
 Automatically deployed with `_launch.bash`:
@@ -362,8 +454,9 @@ misc/mdb_operator_diagnostic_data.sh
 |-----------|---------|---------------|
 | MongoDB Controllers for Kubernetes (MCK) | 1.6.0 | [Docs](https://www.mongodb.com/docs/kubernetes/current/) |
 | Ops Manager | 8.0.13 | [Release Notes](https://www.mongodb.com/docs/ops-manager/current/release-notes/application/) |
-| MongoDB Enterprise | 8.0.4-ent | [Compatibility](https://www.mongodb.com/docs/ops-manager/current/reference/mongodb-compatibility/) |
+| MongoDB Enterprise | 8.2.0-ent | [Compatibility](https://www.mongodb.com/docs/ops-manager/current/reference/mongodb-compatibility/) |
 | cert-manager | v1.16.2 | [Docs](https://cert-manager.io/docs/) |
+| MongoDB Search (Preview) | 0.55.0 | [Docs](https://www.mongodb.com/docs/kubernetes/current/fts-vs-deployment/) |
 
 ## Evolution & Lessons Learned
 

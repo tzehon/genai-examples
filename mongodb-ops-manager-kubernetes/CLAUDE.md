@@ -15,7 +15,8 @@ cp sample_init.conf init.conf  # Configure credentials first
 # Individual deployments
 ./deploy_Operator.bash         # MCK operator + cert-manager
 ./deploy_OM.bash               # Ops Manager + AppDB
-./deploy_Cluster.bash -n myreplicaset -v 8.0.4-ent  # MongoDB cluster
+./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent  # MongoDB cluster
+./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent --search  # With search nodes (Preview)
 
 # Cleanup
 ./_cleanup.bash -k             # K8s resources only (before redeploying)
@@ -30,6 +31,7 @@ bin/get_key.bash               # Get Ops Manager API keys
 bin/get_connection_string.bash -n <cluster>  # Get connection string
 bin/connect_external.bash -n <cluster>       # Connect via mongosh
 bin/deploy_ldap.bash           # Deploy OpenLDAP server
+bin/test_search.bash -n <cluster>            # Test MongoDB Search (Preview)
 ```
 
 ## Architecture
@@ -39,6 +41,7 @@ Deploys MongoDB Ops Manager on Kubernetes using MongoDB Controllers for Kubernet
 - **cert-manager**: TLS certificate lifecycle management
 - **Ops Manager**: Web UI + Application Database (3-node replica set)
 - **Backup Infrastructure**: Oplog store + Blockstore for point-in-time recovery
+- **MongoDB Search (Preview)**: `mongot` pods for full-text and vector search (ReplicaSet only, requires 8.2+)
 
 ### Directory Structure
 - `scripts/` - Core deployment scripts and `init.conf` configuration
