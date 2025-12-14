@@ -5,7 +5,7 @@ d=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${d}"
 source init.conf
 
-while getopts 'n:c:m:d:v:l:ks:r:i:o:p:e:gxh' opt
+while getopts 'n:c:m:d:v:l:ks:r:i:o:p:e:gxh-:' opt
 do
   case "$opt" in
     n) name="$OPTARG" ;;
@@ -22,13 +22,23 @@ do
     x) x=true ;; # cleanup
     s) shards="$OPTARG" ;;
     r) mongos="$OPTARG" ;;
+    -)
+      case "${OPTARG}" in
+        search) search=true ;;
+        *)
+          echo "Unknown option --${OPTARG}"
+          exit 1
+          ;;
+      esac
+      ;;
     ?|h)
-      echo "Usage: $(basename $0) [-n name] [-c cpu] [-m memory] [-d disk] [-v ver] [ -e horizon ] [-s shards] [-r mongos] [-l ldap[s]] [-k] [-o orgName] [-p projectName] [-g] [-x]"
+      echo "Usage: $(basename $0) [-n name] [-c cpu] [-m memory] [-d disk] [-v ver] [ -e horizon ] [-s shards] [-r mongos] [-l ldap[s]] [-k] [-o orgName] [-p projectName] [-g] [-x] [--search]"
       echo "Usage:       -e to generate the external service definitions when using externalDomain or splitHorizon names"
       echo "Usage:           - for replicaSets: use -e horizon or -e external.domain"
-      echo "Usaag:           - for sharded clusters: use -e mongos"
+      echo "Usage:           - for sharded clusters: use -e mongos"
       echo "Usage:       -g to NOT (re)create the certs."
       echo "Usage:       -x for a total clean up "
+      echo "Usage:       --search to deploy MongoDB Search nodes (Preview, ReplicaSet only, requires MongoDB 8.2+)"
       exit 1
       ;;
   esac
@@ -52,6 +62,31 @@ else
     name="${name:-myreplicset}"
     template="${name:-myreplicaset}"
     template="../templates/mdb_template_rs.yaml"
+fi
+
+# Search nodes configuration (Preview feature)
+search=${search:-false}
+if [[ ${search} == true ]]
+then
+    # Validate: search only works with ReplicaSet
+    if [[ ${sharded} == true ]]
+    then
+        printf "Error: --search is only supported for ReplicaSets, not sharded clusters.\n"
+        printf "       MongoDB Search nodes are tightly coupled with a single replica set.\n"
+        exit 1
+    fi
+    # Validate: search requires MongoDB 8.2+
+    searchMinVer="8.2"
+    verNum="${ver:-$mdbVersion}"
+    verMajorMinor="${verNum%.*}"  # Remove patch version
+    verMajorMinor="${verMajorMinor%-ent}"  # Remove -ent suffix if present
+    if [[ $(printf '%s\n' "$searchMinVer" "$verMajorMinor" | sort -V | head -n1) != "$searchMinVer" ]]
+    then
+        printf "Error: --search requires MongoDB 8.2 or higher.\n"
+        printf "       Current version: ${verNum}\n"
+        printf "       Update mdbVersion in init.conf or use -v 8.2.0-ent\n"
+        exit 1
+    fi
 fi
 
 ver="${ver:-$mdbVersion}"
@@ -208,9 +243,20 @@ fi
 
 # Create map for OM Org/Project
 printf "Using Ops Manager at: ${opsMgrUrl} \n"
-printf "%s\n" "Deploying cluster: ${fullName}, version: ${mdbVersion}, cores: ${cpu}, memory: ${mem}, disk: ${dsk}"
+printf "%s\n" "Deploying cluster: ${fullName}, version: ${ver}, cores: ${cpu}, memory: ${mem}, disk: ${dsk}"
 [[ ${shards} ]] && printf "%s\n" "    shards: ${shards}, mongos: ${mongos}"
 printf "%s\n" "    in org: ${deploymentOrgName}, project: ${projectName} with: expose: ${expose}, LDAP: ${ldapType}"
+
+# Search nodes info message
+if [[ ${sharded} == false ]]
+then
+    if [[ ${search} == true ]]
+    then
+        printf "\n%s\n" "MongoDB Search nodes will be deployed after cluster reaches Running state. (Preview)"
+    else
+        printf "\n%s\n" "Note: MongoDB Search nodes can be enabled with --search (Preview, requires MongoDB 8.2+). Skipping search deployment."
+    fi
+fi
 printf "\n"
 
 if [[ ${tls} == true ]]
@@ -381,6 +427,105 @@ then
         "${PWD}/../certs/make_sharded_certs.bash" "${fullName}" mongos -cert "${ext_dns[@]}"
         kubectl -n ${namespace} apply -f "${PWD}/../certs/certs_mdb-${fullName}-mongos-cert.yaml"
         printf "%s\n" "Mongos certificates updated with external DNS names."
+    fi
+fi
+
+# Deploy MongoDB Search nodes if --search was specified (ReplicaSet only)
+if [[ ${search} == true && ${sharded} == false ]]
+then
+    printf "\n%s\n" "__________________________________________________________________________________________"
+    printf "%s\n" "Deploying MongoDB Search nodes (Preview)..."
+
+    # Create search user template files
+    mdbsearchuser="mdbuser_${fullName}_search.yaml"
+    mdbsearch="mdbsearch_${fullName}.yaml"
+    searchUser="search-sync-source"
+    searchPasswordSecret="${fullName}-search-sync-source-password"
+    searchPassword="SearchSync1\$"
+    searchTlsSecret="${fullName}-search-tls"
+
+    # Create search user password secret
+    kubectl -n ${namespace} delete secret "${searchPasswordSecret}" > /dev/null 2>&1
+    kubectl -n ${namespace} create secret generic "${searchPasswordSecret}" \
+        --from-literal=password="${searchPassword}" 2> /dev/null
+
+    # Create search user with searchCoordinator role
+    cat ../templates/mdbuser_template_search.yaml | sed \
+        -e "s|NAME|${fullName}|g" \
+        -e "s|USER|${searchUser}|g" \
+        -e "s|SECRETNAME|${searchPasswordSecret}|g" > "${mdbsearchuser}"
+
+    kubectl -n ${namespace} delete mdbu ${fullName}-search > /dev/null 2>&1
+    kubectl -n ${namespace} apply -f "${mdbsearchuser}"
+    printf "%s\n" "Created search sync user: ${searchUser}"
+
+    # Issue TLS certificate for search nodes
+    if [[ ${tls} == true ]]
+    then
+        searchDnsName="${fullName}-search-svc.${namespace}.svc.cluster.local"
+        kubectl -n ${namespace} apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${fullName}-search-tls
+  namespace: ${namespace}
+spec:
+  secretName: ${searchTlsSecret}
+  issuerRef:
+    name: ${issuerName}
+    kind: Issuer
+  duration: 240h0m0s
+  renewBefore: 120h0m0s
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  dnsNames:
+    - "${searchDnsName}"
+EOF
+        printf "%s\n" "Issued TLS certificate for search nodes"
+        # Wait for certificate to be ready
+        kubectl -n ${namespace} wait --for=condition=Ready certificate/${fullName}-search-tls --timeout=120s 2>/dev/null
+    fi
+
+    # Create MongoDBSearch resource
+    cat ../templates/mdbsearch_template.yaml | sed \
+        -e "s|NAME|${fullName}|g" \
+        -e "s|NAMESPACE|${namespace}|g" \
+        -e "s|SEARCHUSER|${searchUser}|g" \
+        -e "s|SEARCHPASSWORDSECRET|${searchPasswordSecret}|g" \
+        -e "s|SEARCHTLSSECRET|${searchTlsSecret}|g" > "${mdbsearch}"
+
+    # Apply MongoDBSearch resource
+    kubectl -n ${namespace} apply -f "${mdbsearch}"
+    printf "%s\n" "Applied MongoDBSearch resource: ${fullName}"
+
+    # Wait for MongoDBSearch to reach Running
+    printf "%s\n" "Waiting for MongoDBSearch to reach Running state..."
+    n=0
+    max=40
+    while [ $n -lt $max ]
+    do
+        kubectl -n ${namespace} get mdbs "${fullName}" 2>/dev/null
+        searchStatus=$( kubectl -n ${namespace} get mdbs "${fullName}" -o jsonpath='{.status.phase}' 2>/dev/null )
+        if [[ "$searchStatus" == "Running" ]]
+        then
+            printf "%s\n" "MongoDBSearch status: Running"
+            break
+        fi
+        sleep 15
+        n=$((n+1))
+    done
+
+    if [[ "$searchStatus" == "Running" ]]
+    then
+        printf "\n%s\n" "MongoDB Search nodes deployed successfully!"
+        printf "%s\n" "To verify search is working, run: bin/test_search.bash -n ${fullName}"
+    else
+        printf "\n%s\n" "Warning: MongoDBSearch did not reach Running state within timeout."
+        printf "%s\n" "Check status: kubectl -n ${namespace} describe mdbs ${fullName}"
+        printf "%s\n" "Check logs: kubectl -n ${namespace} logs ${fullName}-search-0"
     fi
 fi
 

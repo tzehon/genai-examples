@@ -1,0 +1,39 @@
+---
+# MongoDBSearch Custom Resource (Preview Feature)
+# Deploys mongot process for MongoDB Search and Vector Search capabilities
+# Requires MongoDB 8.2+ Enterprise Edition
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: NAME
+  namespace: NAMESPACE
+spec:
+  # Reference to the MongoDB resource (same name by default)
+  source:
+    mongodbResourceRef:
+      name: NAME
+    username: SEARCHUSER
+    passwordSecretRef:
+      name: SEARCHPASSWORDSECRET
+      key: password
+  # TLS configuration for mongot
+  security:
+    tls:
+      certificateKeySecretRef:
+        name: SEARCHTLSSECRET
+  # Resource requirements for search pods
+  resourceRequirements:
+    limits:
+      cpu: "2"
+      memory: 4Gi
+    requests:
+      cpu: "1"
+      memory: 2Gi
+  # Persistent storage for search indexes
+  persistence:
+    single:
+      storage: 10Gi
+  # Logging level
+  logLevel: INFO
+  # Enable Prometheus metrics endpoint on port 9946
+  prometheus: {}

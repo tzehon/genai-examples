@@ -1,0 +1,18 @@
+---
+# MongoDBUser for search sync (searchCoordinator role)
+# This user is used by mongot to connect to MongoDB for data synchronization
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: NAME-search
+spec:
+  passwordSecretKeyRef:
+    name: SECRETNAME
+    key: password
+  username: "USER"
+  db: "admin"
+  mongodbResourceRef:
+    name: "NAME"
+  roles:
+    - db: "admin"
+      name: "searchCoordinator"
