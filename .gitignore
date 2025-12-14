@@ -185,11 +185,14 @@ pyrightconfig.json
 .Spotlight-V100
 .Trashes
 
-### Atlas Alerts Automation ###
+### Alerts Automation (Atlas & Ops Manager) ###
 # Generated alert JSON files
 atlas-alerts-creation/alerts/
+ops-manager-alerts-creation/alerts/
 # Execution logs
 atlas-alerts-creation/logs/
-# Alert tracking file (can be in root or atlas-alerts-creation/)
+ops-manager-alerts-creation/logs/
+# Alert tracking file
 .automation_alert_ids.json
 atlas-alerts-creation/.automation_alert_ids.json
+ops-manager-alerts-creation/.automation_alert_ids.json
