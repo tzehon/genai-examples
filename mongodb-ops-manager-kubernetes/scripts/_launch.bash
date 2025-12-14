@@ -50,17 +50,27 @@ print_summary() {
 }
 
 # argument if set to 1 will skipCertGen creating new certs for OM and the App DB
-while getopts 'odsgh' opt
+while getopts 'odsgh-:' opt
 do
   case "$opt" in
     o)   OM="true"; Clusters="false" ;;
     d)   Clusters="true"; OM="false" ;;
     s|g) skipCertGen="-g" ;;
+    -)
+      case "${OPTARG}" in
+        search) searchFlag="--search" ;;
+        *)
+          echo "Unknown option --${OPTARG}"
+          exit 1
+          ;;
+      esac
+      ;;
     ?|h)
-      echo "Usage: $(basename $0) [-o ] [-s|-g]"
-      echo "     use -o to deploy the OM resource"
-      echo "     use -d to deploy the Cluster resources"
-      echo "     use -s -g to skipCertGen cert generation"
+      echo "Usage: $(basename $0) [-o] [-d] [-s|-g] [--search]"
+      echo "     use -o to deploy the OM resource only"
+      echo "     use -d to deploy the Cluster resources only"
+      echo "     use -s -g to skip cert generation"
+      echo "     use --search to deploy MongoDB Search nodes with ReplicaSet (Preview)"
       exit 1
       ;;
   esac
@@ -146,7 +156,7 @@ printf "%s\n" "Create a Production ReplicaSet Cluster with a splitHorizon config
 date
 projectName="myProject1"
 name="myreplicaset"
-rsOptions="-n ${name} -v ${mdbVersion} -c 1.00 -m 4.0Gi -d 20Gi -l ${ldapType} -o ${deploymentOrgName} -p ${projectName} -e horizon ${skipCertGen}"
+rsOptions="-n ${name} -v ${mdbVersion} -c 1.00 -m 4.0Gi -d 20Gi -l ${ldapType} -o ${deploymentOrgName} -p ${projectName} -e horizon ${skipCertGen} ${searchFlag}"
 time_step "ReplicaSet" "${d}/deploy_Cluster.bash" ${rsOptions}
 printf "#deploy_Cluster.bash ${rsOptions}\n" >> ${deployconf}
 cluster1="${projectName}-${name}"
