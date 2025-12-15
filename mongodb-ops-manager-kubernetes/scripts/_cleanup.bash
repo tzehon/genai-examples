@@ -60,7 +60,25 @@ cleanup_k8s() {
 
     ns=${namespace:-mongodb}
 
-    # Uninstall Helm release first (if helm is available)
+    # Delete MongoDB CRs FIRST while operator is still running
+    # This allows the operator to properly remove finalizers
+    echo "Deleting MongoDB custom resources..."
+    kubectl -n ${ns} delete mongodbsearch --all --ignore-not-found --timeout=60s 2>/dev/null || true
+    kubectl -n ${ns} delete mongodbuser --all --ignore-not-found --timeout=60s 2>/dev/null || true
+    kubectl -n ${ns} delete mongodb --all --ignore-not-found --timeout=120s 2>/dev/null || true
+    kubectl -n ${ns} delete mongodbopsmanager --all --ignore-not-found --timeout=120s 2>/dev/null || true
+
+    # Wait for StatefulSets to be deleted
+    echo "Waiting for MongoDB StatefulSets to terminate..."
+    while kubectl -n ${ns} get sts -l app.kubernetes.io/component=mongodb 2>/dev/null | grep -q .; do
+        sleep 5
+    done
+
+    # Delete PVCs (may have Retain policy)
+    echo "Deleting PVCs..."
+    kubectl -n ${ns} delete pvc --all --ignore-not-found --timeout=60s 2>/dev/null || true
+
+    # NOW uninstall Helm release (operator)
     if command -v helm &> /dev/null; then
         echo "Uninstalling Helm release: mongodb-kubernetes"
         helm uninstall mongodb-kubernetes -n ${ns} 2>/dev/null || true
@@ -72,6 +90,14 @@ cleanup_k8s() {
     # Wait for namespace to be fully terminated
     echo "Waiting for namespace to be fully deleted..."
     kubectl wait --for=delete namespace/${ns} --timeout=120s 2>/dev/null || true
+
+    # Force-remove finalizers if namespace is stuck in Terminating state
+    if kubectl get ns ${ns} -o jsonpath='{.status.phase}' 2>/dev/null | grep -q Terminating; then
+        echo "Namespace stuck in Terminating, force-removing finalizers..."
+        kubectl get ns ${ns} -o json | jq '.spec.finalizers = []' | \
+            kubectl replace --raw "/api/v1/namespaces/${ns}/finalize" -f -
+        sleep 5
+    fi
 
     echo "Kubernetes cleanup complete"
 }
