@@ -1,0 +1,9 @@
+MongoDB Ops Manager can be deployed on Kubernetes using the [MongoDB Controllers for Kubernetes (MCK)](https://www.mongodb.com/docs/kubernetes/current/) operator, and this learning-focused project provides automated scripts for setting up a complete environment including TLS encryption via [cert-manager](https://cert-manager.io/docs/), backup infrastructure with oplog/blockstore, LDAP integration, and external access configurations. The deployment creates an Ops Manager instance with a 3-node application database, automated backup capabilities for point-in-time recovery, and supports both ReplicaSet and sharded cluster topologies with optional MongoDB Search (preview) functionality for full-text and vector search. A single `_launch.bash` script orchestrates the entire deployment from cluster creation through Ops Manager setup and production database provisioning, while connection helper scripts automatically handle credential extraction and TLS certificate management for external access.
+
+**Key capabilities:**
+- Full automation: GKE cluster creation, MCK operator deployment, Ops Manager with AppDB, and production clusters
+- Automated TLS certificate lifecycle using cert-manager with self-signed or custom CA support
+- Split-horizon DNS for ReplicaSets and LoadBalancer exposure for sharded clusters with automatic certificate updates
+- Optional OpenLDAP integration for enterprise authentication testing
+- MongoDB Search (preview) support with automated testing script for full-text and vector search validation
+- Comprehensive cleanup utilities for restarting failed deployments or tearing down environments
