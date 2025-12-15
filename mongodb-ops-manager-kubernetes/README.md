@@ -48,7 +48,7 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| Kubernetes | 1.16+ | Tested on GKE, EKS, OpenShift |
+| Kubernetes | 1.16+ | Tested on GKE |
 | kubectl | Latest | Kubernetes CLI |
 | Helm | 3.x | For MCK operator installation |
 | gcloud | Latest | For GKE cluster creation |
