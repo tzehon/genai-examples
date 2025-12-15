@@ -40,7 +40,7 @@ fi
 if [[ ${hostname} == "null" || ${hostname} == "" ]]
 then
     eval list=( $(nslookup ${opsMgrExtIp} | grep "name =" ) )
-    hostname=${list[3]}
+    hostname=${list[3]%.}  # Remove trailing dot from FQDN
 fi
 opsMgrExtUrl1=${http}://${omExternalName}:${port}
 opsMgrExtUrl2=${http}://${hostname}:${port}
