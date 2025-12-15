@@ -128,14 +128,14 @@ then
     printf "\n%s\n" "__________________________________________________________________________________________"
     printf "%s\n" "Create the Backup Oplog DB for OM ..."
     date
-    oplogOptions="-n oplog -p ${omName} -v ${appdbVersion} -c 0.50 -m 2.0Gi -d 40Gi -o ${omName}-db ${skipCertGen}"
+    oplogOptions="-n ${omName}-oplog -v ${appdbVersion} -c 0.50 -m 2.0Gi -d 40Gi -o ${omName}-db ${skipCertGen}"
     time_step "Oplog DB" "${d}/deploy_Cluster.bash" ${oplogOptions}
     printf "#deploy_Cluster.bash ${oplogOptions}\n" >> ${deployconf}
 
     printf "\n%s\n" "__________________________________________________________________________________________"
     printf "%s\n" "Create the Backup BlockStore DB for OM ..."
     date
-    blockstoreOptions="-n blockstore -p ${omName} -v ${appdbVersion} -c 1.00 -m 4.0Gi -d 40Gi -o ${omName}-db ${skipCertGen}"
+    blockstoreOptions="-n ${omName}-blockstore -v ${appdbVersion} -c 1.00 -m 4.0Gi -d 40Gi -o ${omName}-db ${skipCertGen}"
     time_step "Blockstore DB" "${d}/deploy_Cluster.bash" ${blockstoreOptions}
     printf "#deploy_Cluster.bash ${blockstoreOptions}\n" >> ${deployconf}
 fi # backup true
