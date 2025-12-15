@@ -467,7 +467,7 @@ This project evolved through several major iterations:
 
 2. **Docker to Kubernetes-Only** - Removed Docker Compose setup to focus exclusively on Kubernetes deployments for production parity.
 
-3. **cert-manager Integration** - Replaced manual cfssl certificate generation with Venafi Jetstack cert-manager for automated TLS lifecycle management.
+3. **cert-manager Integration** - Replaced manual cfssl certificate generation with cert-manager for automated TLS lifecycle management.
 
 4. **External Access Improvements** - Implemented split-horizon DNS for ReplicaSets and LoadBalancer exposure for sharded cluster mongos instances.
 
