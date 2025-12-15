@@ -243,6 +243,7 @@ Deploy MongoDB Search nodes (`mongot`) to enable full-text search and vector sea
 
 **Requirements:**
 - MongoDB 8.2+ Enterprise Edition
+- Ops Manager 8.0.14+ (required for `searchCoordinator` role support)
 - ReplicaSet only (sharded clusters not supported)
 - MCK Operator 1.6+
 
@@ -453,7 +454,7 @@ misc/mdb_operator_diagnostic_data.sh
 | Component | Version | Documentation |
 |-----------|---------|---------------|
 | MongoDB Controllers for Kubernetes (MCK) | 1.6.0 | [Docs](https://www.mongodb.com/docs/kubernetes/current/) |
-| Ops Manager | 8.0.13 | [Release Notes](https://www.mongodb.com/docs/ops-manager/current/release-notes/application/) |
+| Ops Manager | 8.0.14 | [Release Notes](https://www.mongodb.com/docs/ops-manager/current/release-notes/application/) |
 | MongoDB Enterprise | 8.2.0-ent | [Compatibility](https://www.mongodb.com/docs/ops-manager/current/reference/mongodb-compatibility/) |
 | cert-manager | v1.16.2 | [Docs](https://cert-manager.io/docs/) |
 | MongoDB Search (Preview) | 0.55.0 | [Docs](https://www.mongodb.com/docs/kubernetes/current/fts-vs-deployment/) |

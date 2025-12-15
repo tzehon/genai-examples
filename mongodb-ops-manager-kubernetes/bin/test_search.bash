@@ -121,11 +121,20 @@ while [ $elapsed -lt $timeout ]
 do
     result=$( eval "mongosh ${fcs} --quiet --eval \"${getIndexCmd}\"" 2>&1 )
 
-    # Check if status is READY
+    # Check if index exists (on-prem search doesn't have status/queryable fields like Atlas)
+    # For Atlas Search: check for "READY" and "queryable: true"
+    # For on-prem Search: check for index name in response
     if [[ "$result" == *"READY"* && "$result" == *"queryable: true"* ]]
     then
         echo "      $result" | grep -E "(name|status|queryable)" | head -5
         echo -e "      Status: ${GREEN}READY${NC} (${elapsed}s elapsed)"
+        indexReady=true
+        break
+    elif [[ "$result" == *"${indexName}"* && "$result" == *"latestDefinition"* ]]
+    then
+        # On-prem MongoDB Search format - index exists and has definition
+        echo "      $result" | grep -E "(name|type)" | head -3
+        echo -e "      Status: ${GREEN}INDEX EXISTS${NC} (${elapsed}s elapsed)"
         indexReady=true
         break
     else
@@ -155,11 +164,11 @@ echo ""
 # Step 5: Run search query
 echo "[5/5] Running \$search query..."
 searchCmd="db.getSiblingDB('${testDb}').${testCollection}.aggregate([
-  { \\\$search: { text: { query: 'matrix', path: { wildcard: '*' } } } }
+  { \\\$search: { index: '${indexName}', text: { query: 'matrix', path: 'title' } } }
 ]).toArray()"
 
 echo "      \$ db.getSiblingDB('${testDb}').${testCollection}.aggregate(["
-echo "          { \$search: { text: { query: 'matrix', path: { wildcard: '*' } } } }"
+echo "          { \$search: { index: '${indexName}', text: { query: 'matrix', path: 'title' } } }"
 echo "        ])"
 
 result=$( eval "mongosh ${fcs} --quiet --eval \"${searchCmd}\"" 2>&1 )

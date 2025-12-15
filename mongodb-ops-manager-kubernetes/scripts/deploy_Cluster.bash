@@ -450,10 +450,11 @@ then
         --from-literal=password="${searchPassword}" 2> /dev/null
 
     # Create search user with searchCoordinator role
+    # Note: SECRETNAME must be replaced before NAME to avoid collision
     cat ../templates/mdbuser_template_search.yaml | sed \
+        -e "s|SECRETNAME|${searchPasswordSecret}|g" \
         -e "s|NAME|${fullName}|g" \
-        -e "s|USER|${searchUser}|g" \
-        -e "s|SECRETNAME|${searchPasswordSecret}|g" > "${mdbsearchuser}"
+        -e "s|USER|${searchUser}|g" > "${mdbsearchuser}"
 
     kubectl -n ${namespace} delete mdbu ${fullName}-search > /dev/null 2>&1
     kubectl -n ${namespace} apply -f "${mdbsearchuser}"
@@ -462,7 +463,7 @@ then
     # Issue TLS certificate for search nodes
     if [[ ${tls} == true ]]
     then
-        searchDnsName="${fullName}-search-svc.${namespace}.svc.cluster.local"
+        searchDnsName="${fullName}-search-svc.${namespace}.svc.${clusterDomain}"
         kubectl -n ${namespace} apply -f - <<EOF
 apiVersion: cert-manager.io/v1
 kind: Certificate
