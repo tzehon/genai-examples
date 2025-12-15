@@ -1,6 +1,6 @@
 # MongoDB Ops Manager on Kubernetes
 
-> **Note:** This project is intended for **getting started, learning, and demonstration purposes only**. It is not production-ready. The scripts lack comprehensive error handling, input validation, and security hardening required for production environments.
+> **Note:** This project is designed for learning, demonstration, and development purposes. For production deployments, consult the [official MongoDB documentation](https://www.mongodb.com/docs/kubernetes/current/) for recommended architectures, security practices, and operational procedures.
 
 Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using MongoDB Controllers for Kubernetes (MCK). This project provides a quick-start setup including TLS encryption, backup infrastructure, LDAP integration, and external access options.
 
