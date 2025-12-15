@@ -342,6 +342,45 @@ Default schedule:
 - Retention: 2 days (snapshots), 2 weeks (weekly), 1 month (monthly)
 - Point-in-time: 1 day window
 
+## Unattended Deployment
+
+During deployment, `_launch.bash` modifies `/etc/hosts` to add hostname entries for local access to Ops Manager and MongoDB clusters. This requires `sudo` and will prompt for your password.
+
+### Why sudo is needed
+
+The deployment adds entries like:
+```
+34.168.33.127    opsmanager-svc.mongodb.svc.mdb.com opsmanager-svc om.mongodb.mdb.com
+```
+
+This allows you to access services using friendly hostnames instead of raw IPs.
+
+### Running fully unattended
+
+To avoid password prompts during automated deployments:
+
+1. **Configure sudoers** (recommended):
+   ```bash
+   sudo visudo
+   # Add this line (replace YOUR_USERNAME with your actual username):
+   YOUR_USERNAME ALL=(ALL) NOPASSWD: /usr/bin/sed, /usr/bin/tee
+   ```
+
+2. **Verify it works**:
+   ```bash
+   sudo tee -a /dev/null <<< "test"  # Should not prompt for password
+   ```
+
+3. **Chain cluster creation and deployment**:
+   ```bash
+   ./0_make_k8s.bash && ./_launch.bash
+   ```
+
+> **Security note:** This grants passwordless sudo only for `sed` and `tee` commands. If you're the only user on the machine, this is low risk. For shared systems, you can restrict further to specific files:
+> ```
+> YOUR_USERNAME ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/hosts, /usr/bin/sed * /etc/hosts
+> ```
+
 ## Common Operations
 
 ### Retrieve API Keys
