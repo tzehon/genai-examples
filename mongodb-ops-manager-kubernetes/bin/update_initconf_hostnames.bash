@@ -37,28 +37,22 @@ then
     port=${nodePort}
 fi
 
-if [[ ${hostname} == "null" || ${hostname} == "" ]]
-then
-    eval list=( $(nslookup ${opsMgrExtIp} | grep "name =" ) )
-    hostname=${list[3]%.}  # Remove trailing dot from FQDN
-fi
-opsMgrExtUrl1=${http}://${omExternalName}:${port}
-opsMgrExtUrl2=${http}://${hostname}:${port}
-
-if [[ $opsMgrExtIp == "" ]]
-then
-    eval list=( $(nslookup ${hostname} | grep Address ) )
-    opsMgrExtIp=${list[3]}
-fi
-[[ "${hostname}" == "localhost" ]] && opsMgrExtIp=127.0.0.1
+# Build external URLs
+# opsMgrExtUrl: Direct IP access (always works)
+# opsMgrExtHostUrl: Custom hostname (requires /etc/hosts or DNS setup)
+opsMgrExtUrl=${http}://${opsMgrExtIp}:${port}
+opsMgrExtHostUrl=${http}://${omExternalName}:${port}
 
 # Update init.conf with OpsMgr info
 initconf=$( sed -e '/opsMgrUrl/d' -e '/opsMgrExt/d' -e '/queryableBackupIp/d' init.conf )
 printf "%s\n" "$initconf" > init.conf
 echo ""
+echo "# Internal URL (from inside K8s cluster):"
 echo  opsMgrUrl=\""$opsMgrUrl"\"                    | tee -a init.conf
-echo  opsMgrExtUrl1=\""$opsMgrExtUrl1"\"            | tee -a init.conf
-echo  opsMgrExtUrl2=\""$opsMgrExtUrl2"\"            | tee -a init.conf
+echo "# External URL via IP (use this from your browser):"
+echo  opsMgrExtUrl=\""$opsMgrExtUrl"\"              | tee -a init.conf
+echo "# External URL via hostname (requires /etc/hosts entry below):"
+echo  opsMgrExtHostUrl=\""$opsMgrExtHostUrl"\"      | tee -a init.conf
 echo  opsMgrExtIp=\""$opsMgrExtIp"\"                | tee -a init.conf
 
 if [[ ${opsMgrExtIp} != "" ]]
