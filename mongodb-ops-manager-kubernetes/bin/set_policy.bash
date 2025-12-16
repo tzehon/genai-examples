@@ -42,7 +42,7 @@ then
   output=$( curl $curlOpts --silent --user "${publicKey}:${privateKey}" --digest \
   --header 'Accept: application/json' \
   --header 'Content-Type: application/json' \
-  --request PUT "${opsMgrExtUrl1}/api/public/v1.0/groups/${projectId}/controlledFeature?pretty=true" \
+  --request PUT "${opsMgrExtUrl}/api/public/v1.0/groups/${projectId}/controlledFeature?pretty=true" \
   --data "${curlData}" )
 fi
 

@@ -18,7 +18,7 @@ fi
 output=$( curl $curlOpts --silent --user "${publicKey}:${privateKey}" --digest \
   --header 'Accept: application/json' \
   --header 'Content-Type: application/json' \
-  --request GET "${opsMgrExtUrl1}/api/public/v1.0/groups/${projectId}/hosts?pretty=true" )
+  --request GET "${opsMgrExtUrl}/api/public/v1.0/groups/${projectId}/hosts?pretty=true" )
 
 printf "%s" "$output" | jq '.results[]| .hostname,.systemInfo'
 exit 0

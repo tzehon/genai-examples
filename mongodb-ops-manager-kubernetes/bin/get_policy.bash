@@ -20,7 +20,7 @@ done
 output=$( curl $curlOpts --silent --user "${publicKey}:${privateKey}" --digest \
  --header 'Accept: application/json' \
  --header 'Content-Type: application/json' \
- --request GET "${opsMgrExtUrl1}/api/public/v1.0/groups/${projectId}/controlledFeature?pretty=true" )
+ --request GET "${opsMgrExtUrl}/api/public/v1.0/groups/${projectId}/controlledFeature?pretty=true" )
 
 errorCode=$( printf "%s" "$output" | jq .errorCode )
 

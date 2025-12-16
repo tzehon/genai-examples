@@ -17,7 +17,7 @@ curlData=$( printf '{ "cidrBlock": "MYIP", "description": "my IP"}' | sed -e"s?M
 output=$( curl $curlOpts --silent --user "${publicApiKey}:${privateApiKey}" --digest \
 --header 'Accept: application/json' \
 --header 'Content-Type: application/json' \
---request POST "${opsMgrExtUrl1}/api/public/v1.0/admin/whitelist?pretty=true" \
+--request POST "${opsMgrExtUrl}/api/public/v1.0/admin/whitelist?pretty=true" \
 --data "${curlData}" )
 
 printf "${output}"
