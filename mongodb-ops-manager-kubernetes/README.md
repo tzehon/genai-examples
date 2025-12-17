@@ -68,16 +68,13 @@ cd mongodb-ops-manager-kubernetes/scripts
 cp sample_init.conf init.conf
 vi init.conf  # Set your credentials and preferences
 
-# 2. Create K8s cluster (optional - for GKE)
-./0_make_k8s.bash
+# 2. Create K8s cluster and deploy everything (with MongoDB Search)
+./0_make_k8s.bash && ./_launch.bash --search
 
-# 3. Deploy everything
-./_launch.bash
-
-# 4. Get Ops Manager URL
+# 3. Get Ops Manager URL
 grep opsMgrExtUrl init.conf
 
-# 5. Get API Key (for creating alerts, API access, etc.)
+# 4. Get API Key (for creating alerts, API access, etc.)
 bin/get_key.bash
 # Or from K8s secret:
 kubectl get secret mongodb-opsmanager-admin-key -n mongodb \
@@ -249,11 +246,11 @@ Deploy MongoDB Search nodes (`mongot`) to enable full-text search and vector sea
 
 **Deploy with Search:**
 ```bash
-# Deploy ReplicaSet with search nodes
-./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent --search
+# Full stack deployment with search (fastest way to get started)
+./0_make_k8s.bash && ./_launch.bash --search
 
-# Or add to existing deployment command
-./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent -e horizon --search
+# Or deploy individual cluster with search
+./deploy_Cluster.bash -n myreplicaset -v 8.2.0-ent --search
 ```
 
 **Verify Search is Working:**
@@ -373,7 +370,7 @@ To avoid password prompts during automated deployments:
 
 3. **Chain cluster creation and deployment**:
    ```bash
-   ./0_make_k8s.bash && ./_launch.bash
+   ./0_make_k8s.bash && ./_launch.bash --search
    ```
 
 > **Security note:** This grants passwordless sudo only for `sed` and `tee` commands. If you're the only user on the machine, this is low risk. For shared systems, you can restrict further to specific files:
