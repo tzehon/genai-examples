@@ -52,7 +52,7 @@ Deploy MongoDB Ops Manager and managed MongoDB clusters on Kubernetes using Mong
 | kubectl | Latest | Kubernetes CLI |
 | Helm | 3.x | For MCK operator installation |
 | gcloud | Latest | For GKE cluster creation |
-| cfssl (optional) | Latest | For custom CA generation |
+| cfssl | Latest | Required for root CA generation (TLS enabled by default) |
 
 ### Resource Requirements
 
@@ -503,7 +503,7 @@ This project evolved through several major iterations:
 
 2. **Docker to Kubernetes-Only** - Removed Docker Compose setup to focus exclusively on Kubernetes deployments for production parity.
 
-3. **cert-manager Integration** - Replaced manual cfssl certificate generation with cert-manager for automated TLS lifecycle management.
+3. **cert-manager Integration** - cfssl generates the root CA, then cert-manager handles all certificate issuance and lifecycle management.
 
 4. **External Access Improvements** - Implemented split-horizon DNS for ReplicaSets and LoadBalancer exposure for sharded cluster mongos instances.
 
