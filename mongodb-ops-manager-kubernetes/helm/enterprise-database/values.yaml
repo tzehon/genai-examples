@@ -2,7 +2,7 @@
 mongodb:
   type: ReplicaSet
   members: 3
-  version: 6.0.2
+  version: 8.0.17-ent
 
   authentication:
     - SCRAM
