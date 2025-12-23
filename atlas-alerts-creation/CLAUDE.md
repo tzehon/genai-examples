@@ -50,3 +50,7 @@ Create alert manually in Atlas UI, then query via CLI:
 ```bash
 atlas alerts settings list --projectId PROJECT_ID --output json
 ```
+Copy these fields from the output:
+- `eventTypeName` → `event_type`
+- `metricThreshold.metricName` → `metric_name`
+- `metricThreshold.units` → `units`

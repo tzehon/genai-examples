@@ -155,7 +155,7 @@ Deletes ALL alerts including default Atlas alerts. You'll need to type `delete a
 | Alert Name | Atlas Event Type | Metric Name |
 |------------|------------------|-------------|
 | Oplog Window | REPLICATION_OPLOG_WINDOW_RUNNING_OUT | - |
-| Number of elections in last hour | PRIMARY_ELECTED | - |
+| Number of elections in last hour | TOO_MANY_ELECTIONS | - |
 | Disk read IOPS on Data Partition | OUTSIDE_METRIC_THRESHOLD | DISK_PARTITION_READ_IOPS_DATA |
 | Disk write IOPS on Data Partition | OUTSIDE_METRIC_THRESHOLD | DISK_PARTITION_WRITE_IOPS_DATA |
 | Disk read latency on Data Partition | OUTSIDE_METRIC_THRESHOLD | DISK_PARTITION_READ_LATENCY_DATA |
@@ -386,10 +386,11 @@ cat alerts.json | python3 -c "import sys,json;data=json.load(sys.stdin);[print(j
 
 Replace `'CPU'` with your search term: `'DISK'`, `'MEMORY'`, `'OPLOG'`, etc.
 
-3. **Copy the exact metric name** from the output:
+3. **Copy the exact event type, metric name, and units** from the output:
 
 ```json
 {
+  "eventTypeName": "OUTSIDE_METRIC_THRESHOLD",
   "metricThreshold": {
     "metricName": "NORMALIZED_SYSTEM_CPU_USER",
     "mode": "AVERAGE",
@@ -400,7 +401,11 @@ Replace `'CPU'` with your search term: `'DISK'`, `'MEMORY'`, `'OPLOG'`, etc.
 }
 ```
 
-4. **Update the script** with the correct metric name in `ALERT_MAPPINGS`
+   - `eventTypeName` → maps to `event_type` in `ALERT_MAPPINGS`
+   - `metricName` → maps to `metric_name`
+   - `units` → can be `RAW`, `BYTES`, `MILLISECONDS`, `SECONDS`, or `HOURS`
+
+4. **Update the script** with these values in `ALERT_MAPPINGS`
 
 5. **Delete the manually created alert** (optional) and re-run the automation:
 ```bash
