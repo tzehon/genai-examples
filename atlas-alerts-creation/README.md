@@ -259,7 +259,6 @@ The Excel file defines **what thresholds to use**. The script's `ALERT_MAPPINGS`
 | Low Priority Threshold | Threshold for low priority alerts (e.g., `> 80% for 5 minutes`) |
 | High Priority Threshold | Threshold for high priority alerts (e.g., `> 90% for 5 minutes`) |
 | Key Insights | Description of what the alert monitors - for documentation only |
-| status | Can be ignored (tracking column) |
 
 **How it works:**
 1. Script reads Alert Name from Excel (e.g., "Disk read IOPS on Data Partition")
