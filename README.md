@@ -103,7 +103,7 @@ A Python automation tool streamlines the deployment of [MongoDB Ops Manager](htt
 
 ### [atlas-alerts-creation](https://github.com/tzehon/research/tree/main/atlas-alerts-creation) (2025-11-27)
 
-Organizations managing multiple MongoDB Atlas projects face a time-consuming challenge: manually implementing the 20+ recommended alert configurations requires cross-referencing documentation, mapping metrics to conditions, and repeating the process for each project. This automation tool solves that problem by allowing teams to define alert configurations once in an Excel spreadsheet and deploy them consistently across any number of Atlas projects in seconds using the [MongoDB Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/). The included spreadsheet was generated using an LLM to extract and structure [MongoDB's recommended alerts](https://www.mongodb.com/docs/atlas/architecture/current/monitoring-alerts/#recommended-atlas-alert-configurations), further reducing manual effort.
+Organizations managing multiple MongoDB Atlas projects face a time-consuming challenge: manually implementing the 20+ recommended alert configurations requires cross-referencing documentation, mapping metrics to conditions, and repeating the process for each project. This automation tool solves that problem by allowing teams to define alert configurations once in an Excel spreadsheet and deploy them consistently across any number of Atlas projects in seconds using the [MongoDB Atlas CLI](https://www.mongodb.com/docs/atlas/cli/current/).
 
 **Key Features:**
 - Automated deployment of 20+ recommended Atlas alerts from Excel configuration
