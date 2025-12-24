@@ -435,6 +435,14 @@ def generate_json_files(
 ) -> list[dict[str, Any]]:
     """Generate JSON configuration files for each alert."""
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Clean up old JSON files before generating new ones
+    old_files = list(output_dir.glob("*.json"))
+    if old_files:
+        logger.info(f"Cleaning up {len(old_files)} old JSON files...")
+        for f in old_files:
+            f.unlink()
+
     generated_files = []
     file_index = 1
 
