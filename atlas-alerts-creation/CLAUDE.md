@@ -46,9 +46,10 @@ Python script that creates MongoDB Atlas alerts from an Excel configuration file
 2. Add row to Excel with Alert Name and thresholds
 
 ### Finding Metric Names
-Create alert manually in Atlas UI, then query via CLI:
+Create alert manually in Atlas UI, then describe it via CLI:
 ```bash
-atlas alerts settings list --projectId PROJECT_ID --output json
+# Get alertConfigId from the edit URL in Atlas UI, then:
+atlas alerts settings describe ALERT_CONFIG_ID --projectId PROJECT_ID --output json
 ```
 Copy these fields from the output:
 - `eventTypeName` → `event_type`

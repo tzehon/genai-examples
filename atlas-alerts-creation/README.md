@@ -374,19 +374,19 @@ This is the most reliable method to find exact metric names:
    - Configure the alert type you want (e.g., CPU, Disk, etc.)
    - Save the alert
 
-2. **Query the alert via Atlas CLI** to see the exact JSON structure:
+2. **Get the alert config ID** from the Atlas UI:
+   - Click to edit the alert you just created
+   - Copy the `alertConfigId` from the URL, e.g.:
+     `https://cloud.mongodb.com/v2/YOUR_PROJECT_ID#/alerts/manage/active?operation=Edit&alertConfigId=YOUR_ALERT_CONFIG_ID`
+
+3. **Query the specific alert via Atlas CLI** to see the exact JSON structure:
 
 ```bash
-# List all alert configurations in JSON format
-atlas alerts settings list --projectId YOUR_PROJECT_ID --output json > alerts.json
-
-# Search for specific alert types (e.g., CPU, DISK)
-cat alerts.json | python3 -c "import sys,json;data=json.load(sys.stdin);[print(json.dumps(a,indent=2)) for a in data.get('results',data) if 'CPU' in str(a)]"
+# Describe the specific alert configuration
+atlas alerts settings describe YOUR_ALERT_CONFIG_ID --projectId YOUR_PROJECT_ID --output json
 ```
 
-Replace `'CPU'` with your search term: `'DISK'`, `'MEMORY'`, `'OPLOG'`, etc.
-
-3. **Copy the exact event type, metric name, and units** from the output:
+4. **Copy the exact event type, metric name, and units** from the output:
 
 ```json
 {
@@ -405,9 +405,9 @@ Replace `'CPU'` with your search term: `'DISK'`, `'MEMORY'`, `'OPLOG'`, etc.
    - `metricName` → maps to `metric_name`
    - `units` → can be `RAW`, `BYTES`, `MILLISECONDS`, `SECONDS`, or `HOURS`
 
-4. **Update the script** with these values in `ALERT_MAPPINGS`
+5. **Update the script** with these values in `ALERT_MAPPINGS`
 
-5. **Delete the manually created alert** (optional) and re-run the automation:
+6. **Delete the manually created alert** (optional) and re-run the automation:
 ```bash
 atlas alerts settings delete ALERT_ID --projectId YOUR_PROJECT_ID --force
 ```
