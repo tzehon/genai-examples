@@ -18,8 +18,6 @@ For a single project, this can take significant time. For organizations managing
 
 This tool automates the entire process: define your alert configurations once in a spreadsheet, then deploy them consistently across any number of projects in seconds.
 
-The included `atlas_alert_configurations.xlsx` spreadsheet was generated using an LLM to extract and structure the recommended alerts from the MongoDB documentation, saving additional manual effort.
-
 ## Prerequisites
 
 - Python 3.8+
