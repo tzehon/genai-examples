@@ -46,9 +46,14 @@ Python script that creates Ops Manager alerts from Excel config via Ops Manager 
 - `run_alerts.sh` - Bash wrapper
 
 ### Finding Metric Names
-Create alert manually in Ops Manager UI, then query API:
+Create alert manually in Ops Manager UI, then describe it via API:
 ```bash
+# Get alertConfigId from the edit URL in Ops Manager UI, then:
 curl -sk -u "${PUBLIC_KEY}:${PRIVATE_KEY}" --digest \
-  "${BASE_URL}/api/public/v1.0/groups/${PROJECT_ID}/alertConfigs" \
-  | python3 -c "import sys,json;data=json.load(sys.stdin);[print(json.dumps(a,indent=2)) for a in data.get('results',[]) if 'DISK' in str(a)]"
+  "${BASE_URL}/api/public/v1.0/groups/${PROJECT_ID}/alertConfigs/${ALERT_CONFIG_ID}" \
+  | python3 -m json.tool
 ```
+Copy these fields from the output:
+- `eventTypeName` → `event_type`
+- `metricThreshold.metricName` → `metric_name`
+- `metricThreshold.units` → `units`
